@@ -37,8 +37,8 @@ export class IpcSocketProvider extends SocketProvider {
      */
     get socket(): Socket { return this.#socket; }
 
-    constructor(path: string, network?: Networkish, options?: JsonRpcApiProviderOptions) {
-        super(network, options);
+    constructor(path: string, krnlAccessToken: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions) {
+        super(network, krnlAccessToken ,options);
         this.#socket = connect(path);
 
         this.socket.on("ready", async () => {

@@ -137,7 +137,8 @@ export class QuickNodeProvider extends JsonRpcProvider implements CommunityResou
         if (token == null) { token = defaultToken; }
 
         const request = QuickNodeProvider.getRequest(network, token);
-        super(request, network, { staticNetwork: network });
+        
+        super(request, null, network, { staticNetwork: network });
 
         defineProperties<QuickNodeProvider>(this, { token });
     }

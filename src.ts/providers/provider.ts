@@ -214,6 +214,11 @@ export interface TransactionRequest {
      */
     enableCcipRead?: boolean;
 
+    /**
+     * The requested FaaS identifiers as an array. eg.: ``["KYC", "KYT"]``
+    */
+    messages?: null | string[];
+
     // Todo?
     //gasMultiplier?: number;
 };
@@ -356,6 +361,10 @@ export function copyRequest(req: TransactionRequest): PreparedTransactionRequest
 
     if ("customData" in req) {
         result.customData = req.customData;
+    }
+
+    if("messages" in req) {
+        result.messages = req.messages;
     }
 
     return result;
@@ -1784,6 +1793,13 @@ export interface FilterByBlockHash extends EventFilter {
  */
 export type ProviderEvent = string | Array<string | Array<string>> | EventFilter | OrphanFilter;
 
+/**
+ * The response for the krnl_transactionRequest rpc call
+ */
+export interface KrnlTxRequestResponse {
+    signatureToken: string;
+    hash: string;
+}
 
 //////////////////////
 // Provider
@@ -1907,6 +1923,13 @@ export interface Provider extends ContractRunner, EventEmitterable<ProviderEvent
      */
     broadcastTransaction(signedTx: string): Promise<TransactionResponse>;
 
+    /**
+     *  Broadcasts the %%signedTx%% to the network, but before adding it 
+     *  to the memory pool the tx is paused in the krnl node and 
+     *  additional services can run on the transaction.
+     */
+    broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse>;
+
 
     ////////////////////
     // Queries
@@ -1987,4 +2010,12 @@ export interface Provider extends ContractRunner, EventEmitterable<ProviderEvent
      *  the ``currentBlockNumber + N``.
      */
     waitForBlock(blockTag?: BlockTag): Promise<Block>;
+
+    
+    /**
+     *  Requests a signature token, where the %%messages%% is
+     *  being signed with the configured token authority.
+     *  It returns both the signature and message hash.
+     */
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
 }

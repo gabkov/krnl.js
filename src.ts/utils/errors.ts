@@ -146,7 +146,10 @@ export type ErrorCode =
     "UNCONFIGURED_NAME" | "OFFCHAIN_FAULT" |
 
     // User Interaction
-    "ACTION_REJECTED"
+    "ACTION_REJECTED" |
+
+    // Krnl Access Token is invalid
+    "INVALID_ACCESS_TOKEN"
 ;
 
 /**
@@ -574,6 +577,13 @@ export interface ActionRejectedError extends EthersError<"ACTION_REJECTED"> {
     reason: "expired" | "rejected" | "pending"
 }
 
+/**
+ *  This Error indicates that the used Krnl Access Token is invalid
+ */
+export interface InvalidAccessTokenError extends EthersError<"INVALID_ACCESS_TOKEN"> {
+}
+
+
 // Coding; converts an ErrorCode its Typed Error
 
 /**
@@ -608,6 +618,8 @@ export type CodedEthersError<T> =
     T extends "UNCONFIGURED_NAME" ? UnconfiguredNameError:
 
     T extends "ACTION_REJECTED" ? ActionRejectedError:
+
+    T extends "INVALID_ACCESS_TOKEN" ? InvalidAccessTokenError:
 
     never;
 

@@ -94,7 +94,7 @@ export class AlchemyProvider extends JsonRpcProvider implements CommunityResourc
         if (apiKey == null) { apiKey = defaultApiKey; }
 
         const request = AlchemyProvider.getRequest(network, apiKey);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
 
         defineProperties<AlchemyProvider>(this, { apiKey });
     }

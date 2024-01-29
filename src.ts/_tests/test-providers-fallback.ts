@@ -10,6 +10,7 @@ import {
 import type {
     PerformActionRequest
 } from "../index.js";
+import { KrnlTxRequestResponse } from "../providers/provider.js";
 
 
 
@@ -34,6 +35,10 @@ export class MockProvider extends AbstractProvider {
 
     async perform(req: PerformActionRequest): Promise<any> {
         return await this._perform(req);
+    }
+    
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        throw new Error("Method not implemented.");
     }
 }
 

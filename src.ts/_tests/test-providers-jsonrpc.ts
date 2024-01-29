@@ -75,7 +75,7 @@ function createProvider(testFunc: ProcessRequest): JsonRpcProvider {
         };
     };
 
-    return new JsonRpcProvider(req, undefined, { cacheTimeout: -1 });
+    return new JsonRpcProvider(req, null, undefined, { cacheTimeout: -1 });
 }
 
 describe("Ensure Catchable Errors", function() {

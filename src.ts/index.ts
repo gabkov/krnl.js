@@ -7,6 +7,7 @@
  */
 import * as ethers from "./ethers.js";
 
+// TODO: rename?
 export { ethers };
 
 export * from "./ethers.js";

@@ -46,8 +46,8 @@ export class WebSocketProvider extends SocketProvider {
         return this.#websocket;
     }
 
-    constructor(url: string | WebSocketLike | WebSocketCreator, network?: Networkish, options?: JsonRpcApiProviderOptions) {
-        super(network, options);
+    constructor(url: string | WebSocketLike | WebSocketCreator, krnlAccessToken?: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions) {
+        super(network, krnlAccessToken, options);
         if (typeof(url) === "string") {
             this.#connect = () => { return new _WebSocket(url); };
             this.#websocket = this.#connect();

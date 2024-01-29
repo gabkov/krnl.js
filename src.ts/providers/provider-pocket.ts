@@ -79,7 +79,7 @@ export class PocketProvider extends JsonRpcProvider implements CommunityResourca
         const options = { staticNetwork: network };
 
         const request = PocketProvider.getRequest(network, applicationId, applicationSecret);
-        super(request, network, options);
+        super(request, null, network, options);
 
         defineProperties<PocketProvider>(this, { applicationId, applicationSecret });
     }

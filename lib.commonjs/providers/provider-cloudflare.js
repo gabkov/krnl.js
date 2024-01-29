@@ -19,7 +19,7 @@ class CloudflareProvider extends provider_jsonrpc_js_1.JsonRpcProvider {
         }
         const network = network_js_1.Network.from(_network);
         (0, index_js_1.assertArgument)(network.name === "mainnet", "unsupported network", "network", _network);
-        super("https:/\/cloudflare-eth.com/", network, { staticNetwork: network });
+        super("https:/\/cloudflare-eth.com/", null, network, { staticNetwork: network });
     }
 }
 exports.CloudflareProvider = CloudflareProvider;

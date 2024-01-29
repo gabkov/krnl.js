@@ -14,7 +14,7 @@ import type { BigNumberish } from "../utils/index.js";
 import type { Listener } from "../utils/index.js";
 import type { Networkish } from "./network.js";
 import type { BlockParams, LogParams, TransactionReceiptParams, TransactionResponseParams } from "./formatting.js";
-import type { BlockTag, EventFilter, Filter, FilterByBlockHash, OrphanFilter, PreparedTransactionRequest, Provider, ProviderEvent, TransactionRequest } from "./provider.js";
+import type { BlockTag, EventFilter, Filter, FilterByBlockHash, KrnlTxRequestResponse, OrphanFilter, PreparedTransactionRequest, Provider, ProviderEvent, TransactionRequest } from "./provider.js";
 /**
  *  The types of additional event values that can be emitted for the
  *  ``"debug"`` event.
@@ -177,6 +177,9 @@ export type PerformActionRequest = {
     method: "broadcastTransaction";
     signedTransaction: string;
 } | {
+    method: "broadcastKrnlTransaction";
+    signedTransaction: string;
+} | {
     method: "call";
     transaction: PerformActionTransaction;
     blockTag: BlockTag;
@@ -249,7 +252,7 @@ export type AbstractProviderOptions = {
  *  formatting output results as well as tracking events for consistent
  *  behaviour on an eventually-consistent network.
  */
-export declare class AbstractProvider implements Provider {
+export declare abstract class AbstractProvider implements Provider {
     #private;
     /**
      *  Create a new **AbstractProvider** connected to %%network%%, or
@@ -257,6 +260,7 @@ export declare class AbstractProvider implements Provider {
      *  [[Network]] if necessary.
      */
     constructor(_network?: "any" | Networkish, options?: AbstractProviderOptions);
+    abstract sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     get pollingInterval(): number;
     /**
      *  Returns ``this``, to allow an **AbstractProvider** to implement
@@ -356,6 +360,7 @@ export declare class AbstractProvider implements Provider {
     getCode(address: AddressLike, blockTag?: BlockTag): Promise<string>;
     getStorage(address: AddressLike, _position: BigNumberish, blockTag?: BlockTag): Promise<string>;
     broadcastTransaction(signedTx: string): Promise<TransactionResponse>;
+    broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse>;
     getBlock(block: BlockTag | string, prefetchTxs?: boolean): Promise<null | Block>;
     getTransaction(hash: string): Promise<null | TransactionResponse>;
     getTransactionReceipt(hash: string): Promise<null | TransactionReceipt>;

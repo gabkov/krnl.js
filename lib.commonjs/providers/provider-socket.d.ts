@@ -91,7 +91,7 @@ export declare class SocketProvider extends JsonRpcApiProvider {
      *
      *  If unspecified, the network will be discovered.
      */
-    constructor(network?: Networkish, _options?: JsonRpcApiProviderOptions);
+    constructor(network?: Networkish, krnlAccessToken?: null | string, _options?: JsonRpcApiProviderOptions);
     _getSubscriber(sub: Subscription): Subscriber;
     /**
      *  Register a new subscriber. This is used internalled by Subscribers

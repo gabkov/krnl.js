@@ -119,6 +119,9 @@ function copyRequest(req) {
     if ("customData" in req) {
         result.customData = req.customData;
     }
+    if ("messages" in req) {
+        result.messages = req.messages;
+    }
     return result;
 }
 exports.copyRequest = copyRequest;

@@ -23,7 +23,7 @@ import { Network } from "./network.js";
 import { NetworkPlugin } from "./plugins-network.js";
 import { PerformActionRequest } from "./abstract-provider.js";
 import type { Networkish } from "./network.js";
-import type { TransactionRequest } from "./provider.js";
+import type { KrnlTxRequestResponse, TransactionRequest } from "./provider.js";
 /**
  *  When subscribing to the ``"debug"`` event on an Etherscan-based
  *  provider, the events receive a **DebugEventEtherscanProvider**
@@ -87,6 +87,7 @@ export declare class EtherscanProvider extends AbstractProvider {
      *  Creates a new **EtherscanBaseProvider**.
      */
     constructor(_network?: Networkish, _apiKey?: string);
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     /**
      *  Returns the base URL.
      *

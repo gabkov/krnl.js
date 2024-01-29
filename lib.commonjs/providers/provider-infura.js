@@ -104,7 +104,7 @@ class InfuraWebSocketProvider extends provider_websocket_js_1.WebSocketProvider 
         const req = provider._getConnection();
         (0, index_js_1.assert)(!req.credentials, "INFURA WebSocket project secrets unsupported", "UNSUPPORTED_OPERATION", { operation: "InfuraProvider.getWebSocketProvider()" });
         const url = req.url.replace(/^http/i, "ws").replace("/v3/", "/ws/v3/");
-        super(url, network);
+        super(url, null, network);
         (0, index_js_1.defineProperties)(this, {
             projectId: provider.projectId,
             projectSecret: provider.projectSecret
@@ -151,7 +151,7 @@ class InfuraProvider extends provider_jsonrpc_js_1.JsonRpcProvider {
             projectSecret = null;
         }
         const request = InfuraProvider.getRequest(network, projectId, projectSecret);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         (0, index_js_1.defineProperties)(this, { projectId, projectSecret });
     }
     _getProvider(chainId) {

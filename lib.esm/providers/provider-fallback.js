@@ -255,6 +255,10 @@ export class FallbackProvider extends AbstractProvider {
         this.eventWorkers = 1;
         assertArgument(this.quorum <= this.#configs.reduce((a, c) => (a + c.weight), 0), "quorum exceed provider wieght", "quorum", this.quorum);
     }
+    // TODO: do we need this?
+    sendKrnlTransactionRequest(messages) {
+        throw new Error("Method not implemented.");
+    }
     get providerConfigs() {
         return this.#configs.map((c) => {
             const result = Object.assign({}, c);
@@ -280,6 +284,8 @@ export class FallbackProvider extends AbstractProvider {
         switch (req.method) {
             case "broadcastTransaction":
                 return await provider.broadcastTransaction(req.signedTransaction);
+            case "broadcastKrnlTransaction":
+                return await provider.broadcastKrnlTransaction(req.signedTransaction);
             case "call":
                 return await provider.call(Object.assign({}, req.transaction, { blockTag: req.blockTag }));
             case "chainId":
@@ -467,6 +473,8 @@ export class FallbackProvider extends AbstractProvider {
                 return checkQuorum(this.quorum, results);
             case "broadcastTransaction":
                 return getAnyResult(this.quorum, results);
+            case "broadcastKrnlTransaction":
+                return getAnyResult(this.quorum, results);
         }
         assert(false, "unsupported method", "UNSUPPORTED_OPERATION", {
             operation: `_perform(${stringify(req.method)})`
@@ -526,7 +534,7 @@ export class FallbackProvider extends AbstractProvider {
         // Broadcasting a transaction is rare (ish) and already incurs
         // a cost on the user, so spamming is safe-ish. Just send it to
         // every backend.
-        if (req.method === "broadcastTransaction") {
+        if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
             // Once any broadcast provides a positive result, use it. No
             // need to wait for anyone else
             const results = this.#configs.map((c) => null);

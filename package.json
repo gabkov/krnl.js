@@ -1,5 +1,5 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "Richard Moore <me@ricmoo.com>, Gabor Kovacs <gabor.kovacs995@gmail.com>",
   "browser": {
     "./lib.esm/crypto/crypto.js": "./lib.esm/crypto/crypto-browser.js",
     "./lib.esm/providers/provider-ipcsocket.js": "./lib.esm/providers/provider-ipcsocket-browser.js",
@@ -98,19 +98,20 @@
   "keywords": [
     "ethereum",
     "ethers",
-    "ethersjs"
+    "ethersjs",
+    "krnl"
   ],
   "license": "MIT",
   "main": "./lib.commonjs/index.js",
   "module": "./lib.esm/index.js",
-  "name": "ethers",
+  "name": "krnl",
   "publishConfig": {
     "access": "public",
     "tag": "latest"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git@github.com:gabkov/krnl.js.git"
   },
   "scripts": {
     "_build-dist": "rollup -c && uglifyjs ./dist/ethers.js -o ./dist/ethers.min.js && uglifyjs ./dist/ethers.umd.js -o ./dist/ethers.umd.min.js && uglifyjs ./dist/wordlists-extra.js -o ./dist/wordlists-extra.min.js",
@@ -131,5 +132,5 @@
     "test-esm": "mocha --trace-warnings --reporter ./reporter.cjs ./lib.esm/_tests/test-*.js"
   },
   "sideEffects": false,
-  "version": "6.10.1"
+  "version": "0.1.0"
 }

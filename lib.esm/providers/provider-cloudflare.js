@@ -16,7 +16,7 @@ export class CloudflareProvider extends JsonRpcProvider {
         }
         const network = Network.from(_network);
         assertArgument(network.name === "mainnet", "unsupported network", "network", _network);
-        super("https:/\/cloudflare-eth.com/", network, { staticNetwork: network });
+        super("https:/\/cloudflare-eth.com/", null, network, { staticNetwork: network });
     }
 }
 //# sourceMappingURL=provider-cloudflare.js.map

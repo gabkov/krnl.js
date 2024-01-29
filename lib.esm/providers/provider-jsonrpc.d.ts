@@ -17,7 +17,7 @@ import type { TypedDataDomain, TypedDataField } from "../hash/index.js";
 import type { TransactionLike } from "../transaction/index.js";
 import type { PerformActionRequest, Subscriber, Subscription } from "./abstract-provider.js";
 import type { Networkish } from "./network.js";
-import type { Provider, TransactionRequest, TransactionResponse } from "./provider.js";
+import type { KrnlTxRequestResponse, Provider, TransactionRequest, TransactionResponse } from "./provider.js";
 import type { Signer } from "./signer.js";
 /**
  *  A JSON-RPC payload, which are sent to a JSON-RPC server.
@@ -210,7 +210,8 @@ export declare class JsonRpcSigner extends AbstractSigner<JsonRpcApiProvider> {
  */
 export declare abstract class JsonRpcApiProvider extends AbstractProvider {
     #private;
-    constructor(network?: Networkish, options?: JsonRpcApiProviderOptions);
+    constructor(network?: Networkish, krnlAccessToken?: null | string, options?: JsonRpcApiProviderOptions);
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     /**
      *  Returns the value associated with the option %%key%%.
      *
@@ -324,7 +325,7 @@ export declare abstract class JsonRpcApiProvider extends AbstractProvider {
  */
 export declare abstract class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
     #private;
-    constructor(network?: Networkish, options?: JsonRpcApiProviderOptions);
+    constructor(network?: Networkish, krnlAccessToken?: null | string, options?: JsonRpcApiProviderOptions);
     _getSubscriber(sub: Subscription): Subscriber;
     /**
      *  The polling interval (default: 4000 ms)
@@ -342,7 +343,7 @@ export declare abstract class JsonRpcApiPollingProvider extends JsonRpcApiProvid
  */
 export declare class JsonRpcProvider extends JsonRpcApiPollingProvider {
     #private;
-    constructor(url?: string | FetchRequest, network?: Networkish, options?: JsonRpcApiProviderOptions);
+    constructor(url?: string | FetchRequest, krnlAccessToken?: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions);
     _getConnection(): FetchRequest;
     send(method: string, params: Array<any> | Record<string, any>): Promise<any>;
     _send(payload: JsonRpcPayload | Array<JsonRpcPayload>): Promise<Array<JsonRpcResult>>;

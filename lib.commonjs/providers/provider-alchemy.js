@@ -84,7 +84,7 @@ class AlchemyProvider extends provider_jsonrpc_js_1.JsonRpcProvider {
             apiKey = defaultApiKey;
         }
         const request = AlchemyProvider.getRequest(network, apiKey);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         (0, index_js_1.defineProperties)(this, { apiKey });
     }
     _getProvider(chainId) {

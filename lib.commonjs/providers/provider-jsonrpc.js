@@ -249,6 +249,7 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
     #notReady;
     #network;
     #pendingDetectNetwork;
+    #krnlAccessToken;
     #scheduleDrain() {
         if (this.#drainTimer) {
             return;
@@ -317,7 +318,7 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
             }
         }, stallTime);
     }
-    constructor(network, options) {
+    constructor(network, krnlAccessToken, options) {
         super(network, options);
         this.#nextId = 1;
         this.#options = Object.assign({}, defaultOptions, options || {});
@@ -325,6 +326,12 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
         this.#drainTimer = null;
         this.#network = null;
         this.#pendingDetectNetwork = null;
+        if (krnlAccessToken) {
+            this.#krnlAccessToken = krnlAccessToken;
+        }
+        else {
+            this.#krnlAccessToken = null;
+        }
         {
             let resolve = null;
             const promise = new Promise((_resolve) => {
@@ -344,6 +351,11 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
             (0, index_js_5.assertArgument)(network == null || staticNetwork.matches(network), "staticNetwork MUST match network object", "options", options);
             this.#network = staticNetwork;
         }
+    }
+    async sendKrnlTransactionRequest(messages) {
+        const message = messages.join(":");
+        const res = await this.send("krnl_transactionRequest", [{ accessToken: this.#krnlAccessToken, message: message }]);
+        return res;
     }
     /**
      *  Returns the value associated with the option %%key%%.
@@ -597,6 +609,11 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
                     method: "eth_sendRawTransaction",
                     args: [req.signedTransaction]
                 };
+            case "broadcastKrnlTransaction":
+                return {
+                    method: "krnl_sendRawTransaction",
+                    args: [req.signedTransaction]
+                };
             case "getBlock":
                 if ("blockTag" in req) {
                     return {
@@ -688,7 +705,7 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
                 info: { payload, error }
             });
         }
-        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction") {
+        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction" || method === "krnl_sendRawTransaction") {
             const transaction = (payload.params[0]);
             if (message.match(/insufficient funds|base fee exceeds gas limit/i)) {
                 return (0, index_js_5.makeError)("insufficient funds for intrinsic transaction cost", "INSUFFICIENT_FUNDS", {
@@ -718,6 +735,10 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
             return (0, index_js_5.makeError)("unsupported operation", "UNSUPPORTED_OPERATION", {
                 operation: payload.method, info: { error, payload }
             });
+        }
+        if (method === "krnl_transactionRequest" && error.message) {
+            const msg = error.message;
+            return (0, index_js_5.makeError)(msg, "INVALID_ACCESS_TOKEN");
         }
         return (0, index_js_5.makeError)("could not coalesce error", "UNKNOWN_ERROR", { error, payload });
     }
@@ -817,8 +838,8 @@ exports.JsonRpcApiProvider = JsonRpcApiProvider;
  */
 class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
     #pollingInterval;
-    constructor(network, options) {
-        super(network, options);
+    constructor(network, krnlAccessToken, options) {
+        super(network, krnlAccessToken, options);
         this.#pollingInterval = 4000;
     }
     _getSubscriber(sub) {
@@ -855,11 +876,11 @@ exports.JsonRpcApiPollingProvider = JsonRpcApiPollingProvider;
  */
 class JsonRpcProvider extends JsonRpcApiPollingProvider {
     #connect;
-    constructor(url, network, options) {
+    constructor(url, krnlAccessToken, network, options) {
         if (url == null) {
             url = "http:/\/localhost:8545";
         }
-        super(network, options);
+        super(network, krnlAccessToken, options);
         if (typeof (url) === "string") {
             this.#connect = new index_js_5.FetchRequest(url);
         }

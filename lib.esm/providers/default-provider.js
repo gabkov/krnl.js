@@ -89,7 +89,7 @@ export function getDefaultProvider(network, options) {
     const providers = [];
     if (allowService("publicPolygon") && staticNetwork) {
         if (staticNetwork.name === "matic") {
-            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", staticNetwork, { staticNetwork }));
+            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", null, staticNetwork, { staticNetwork }));
         }
     }
     if (allowService("alchemy")) {

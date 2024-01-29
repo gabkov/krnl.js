@@ -157,7 +157,7 @@ export class SocketProvider extends JsonRpcApiProvider {
      *
      *  If unspecified, the network will be discovered.
      */
-    constructor(network, _options) {
+    constructor(network, krnlAccessToken, _options) {
         // Copy the options
         const options = Object.assign({}, (_options != null) ? _options : {});
         // Support for batches is generally not supported for
@@ -171,7 +171,7 @@ export class SocketProvider extends JsonRpcApiProvider {
         if (options.staticNetwork == null) {
             options.staticNetwork = true;
         }
-        super(network, options);
+        super(network, krnlAccessToken, options);
         this.#callbacks = new Map();
         this.#subs = new Map();
         this.#pending = new Map();

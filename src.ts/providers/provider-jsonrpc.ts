@@ -626,6 +626,10 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
     }
 
     async sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        if(!this.#krnlAccessToken || this.#krnlAccessToken == null){
+            throw makeError("Krnl access token not provided", "INVALID_ACCESS_TOKEN");
+        }
+        
         const message = messages.join(":");
         
         const res: KrnlTxRequestResponse = await this.send(

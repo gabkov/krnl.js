@@ -354,6 +354,9 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
         }
     }
     async sendKrnlTransactionRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw (0, index_js_5.makeError)("Krnl access token not provided", "INVALID_ACCESS_TOKEN");
+        }
         const message = messages.join(":");
         const res = await this.send("krnl_transactionRequest", [{
                 accessToken: this.#krnlAccessToken,

@@ -234,7 +234,7 @@ export abstract class AbstractSigner<P extends null | Provider = null | Provider
 
         // adding FaaS request messages to data-input and setting max-gas
         // concat with ':'
-        if (tx.messages) {
+        if (tx.messages && tx.messages.length > 0) {
             const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
             const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
             tx.data = tx.data!.concat(separator).concat(additionalData);
@@ -244,8 +244,13 @@ export abstract class AbstractSigner<P extends null | Provider = null | Provider
         const pop = await this.populateTransaction(tx);
         delete pop.from;
         const txObj = Transaction.from(pop);
-        // TODO: if accessToken is not provided call normal broadcast?
-        return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
+        
+        // if no messages provided call the regular broadcast
+        if (tx.messages && tx.messages.length > 0) {
+            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
+        } else {
+            return await provider.broadcastTransaction(await this.signTransaction(txObj));
+        }
     }
 
     abstract signTransaction(tx: TransactionRequest): Promise<string>;

@@ -25,6 +25,7 @@ const abstract_signer_js_1 = require("./abstract-signer.js");
 const network_js_1 = require("./network.js");
 const subscriber_filterid_js_1 = require("./subscriber-filterid.js");
 const subscriber_polling_js_1 = require("./subscriber-polling.js");
+const signature_js_1 = require("../crypto/signature.js");
 const Primitive = "bigint,boolean,function,number,string,symbol".split(/,/g);
 //const Methods = "getAddress,then".split(/,/g);
 function deepCopy(value) {
@@ -354,7 +355,11 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
     }
     async sendKrnlTransactionRequest(messages) {
         const message = messages.join(":");
-        const res = await this.send("krnl_transactionRequest", [{ accessToken: this.#krnlAccessToken, message: message }]);
+        const res = await this.send("krnl_transactionRequest", [{
+                accessToken: this.#krnlAccessToken,
+                message: message
+            }]);
+        res.signatureToken = signature_js_1.Signature.from(res.signatureToken).serialized;
         return res;
     }
     /**

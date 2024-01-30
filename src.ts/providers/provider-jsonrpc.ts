@@ -38,6 +38,7 @@ import type { PerformActionRequest, Subscriber, Subscription } from "./abstract-
 import type { Networkish } from "./network.js";
 import type { KrnlTxRequestResponse, Provider, TransactionRequest, TransactionResponse } from "./provider.js";
 import type { Signer } from "./signer.js";
+import { Signature } from "../crypto/signature.js";
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -627,7 +628,14 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
     async sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
         const message = messages.join(":");
         
-        const res: KrnlTxRequestResponse = await this.send("krnl_transactionRequest", [{accessToken: this.#krnlAccessToken, message: message }])
+        const res: KrnlTxRequestResponse = await this.send(
+            "krnl_transactionRequest", 
+            [{
+                accessToken: this.#krnlAccessToken, 
+                message: message 
+            }])
+        
+        res.signatureToken =  Signature.from(res.signatureToken).serialized
         return res
     }
 

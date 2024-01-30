@@ -22,6 +22,7 @@ import { AbstractSigner } from "./abstract-signer.js";
 import { Network } from "./network.js";
 import { FilterIdEventSubscriber, FilterIdPendingSubscriber } from "./subscriber-filterid.js";
 import { PollingEventSubscriber } from "./subscriber-polling.js";
+import { Signature } from "../crypto/signature.js";
 const Primitive = "bigint,boolean,function,number,string,symbol".split(/,/g);
 //const Methods = "getAddress,then".split(/,/g);
 function deepCopy(value) {
@@ -350,7 +351,11 @@ export class JsonRpcApiProvider extends AbstractProvider {
     }
     async sendKrnlTransactionRequest(messages) {
         const message = messages.join(":");
-        const res = await this.send("krnl_transactionRequest", [{ accessToken: this.#krnlAccessToken, message: message }]);
+        const res = await this.send("krnl_transactionRequest", [{
+                accessToken: this.#krnlAccessToken,
+                message: message
+            }]);
+        res.signatureToken = Signature.from(res.signatureToken).serialized;
         return res;
     }
     /**

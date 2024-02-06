@@ -1,5 +1,5 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>, Gabor Kovacs <gabor.kovacs995@gmail.com>",
+  "author": "gabkov <gabor.kovacs995@gmail.com>",
   "browser": {
     "./lib.esm/crypto/crypto.js": "./lib.esm/crypto/crypto-browser.js",
     "./lib.esm/providers/provider-ipcsocket.js": "./lib.esm/providers/provider-ipcsocket-browser.js",
@@ -17,7 +17,7 @@
     "tslib": "2.4.0",
     "ws": "8.5.0"
   },
-  "description": "A complete and compact Ethereum library, for dapps, wallets and any other tools.",
+  "description": "A complete and compact Ethereum library, for dapps, wallets and any other tools extended with Krnl compatible functionalities.",
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.0.2",
     "@types/mocha": "9.1.1",
@@ -96,8 +96,6 @@
   "gitHead": "56c1361ee83db8b68859caf0850c95ff70e7e306",
   "homepage": "https://ethers.org",
   "keywords": [
-    "ethereum",
-    "ethers",
     "ethersjs",
     "krnl"
   ],
@@ -132,5 +130,5 @@
     "test-esm": "mocha --trace-warnings --reporter ./reporter.cjs ./lib.esm/_tests/test-*.js"
   },
   "sideEffects": false,
-  "version": "0.1.0"
+  "version": "0.1.1"
 }

@@ -101,7 +101,7 @@ export function getDefaultProvider(network: string | Networkish | WebSocketLike,
 
     if (allowService("publicPolygon") && staticNetwork) {
         if (staticNetwork.name === "matic") {
-            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", staticNetwork, { staticNetwork }));
+            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", null, staticNetwork, { staticNetwork }));
         }
     }
 

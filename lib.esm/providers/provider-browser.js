@@ -12,8 +12,8 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
      */
-    constructor(ethereum, network) {
-        super(network, { batchMaxCount: 1 });
+    constructor(ethereum, krnlAccessToken, network) {
+        super(network, krnlAccessToken, { batchMaxCount: 1 });
         this.#request = async (method, params) => {
             const payload = { method, params };
             this.emit("debug", { action: "sendEip1193Request", payload });

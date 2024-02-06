@@ -13,6 +13,7 @@ import { Network } from "./network.js"
 
 import type { PerformActionRequest } from "./abstract-provider.js";
 import type { Networkish } from "./network.js"
+import { KrnlTxRequestResponse } from "./provider.js";
 
 const BN_1 = BigInt("1");
 const BN_2 = BigInt("2");
@@ -414,6 +415,11 @@ export class FallbackProvider extends AbstractProvider {
             "quorum exceed provider wieght", "quorum", this.quorum);
     }
 
+    // TODO: do we need this?
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        throw new Error("Method not implemented.");
+    }
+
     get providerConfigs(): Array<FallbackProviderState> {
         return this.#configs.map((c) => {
             const result: any = Object.assign({ }, c);
@@ -440,6 +446,8 @@ export class FallbackProvider extends AbstractProvider {
         switch (req.method) {
             case "broadcastTransaction":
                 return await provider.broadcastTransaction(req.signedTransaction);
+            case "broadcastKrnlTransaction":
+                return await provider.broadcastKrnlTransaction(req.signedTransaction);
             case "call":
                 return await provider.call(Object.assign({ }, req.transaction, { blockTag: req.blockTag }));
             case "chainId":
@@ -641,6 +649,9 @@ export class FallbackProvider extends AbstractProvider {
 
             case "broadcastTransaction":
                 return getAnyResult(this.quorum, results);
+            
+            case "broadcastKrnlTransaction":
+                return getAnyResult(this.quorum, results);
         }
 
         assert(false, "unsupported method", "UNSUPPORTED_OPERATION", {
@@ -709,7 +720,7 @@ export class FallbackProvider extends AbstractProvider {
         // Broadcasting a transaction is rare (ish) and already incurs
         // a cost on the user, so spamming is safe-ish. Just send it to
         // every backend.
-        if (req.method === "broadcastTransaction") {
+        if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
             // Once any broadcast provides a positive result, use it. No
             // need to wait for anyone else
             const results: Array<null | TallyResult> = this.#configs.map((c) => null);

@@ -1,12 +1,9 @@
 The Ethers Project
 ==================
 
-[![npm (tag)](https://img.shields.io/npm/v/ethers)](https://www.npmjs.com/package/ethers)
-[![CI Tests](https://github.com/ethers-io/ethers.js/actions/workflows/test-ci.yml/badge.svg?branch=main)](https://github.com/ethers-io/ethers.js/actions/workflows/test-ci.yml)
-![npm bundle size (version)](https://img.shields.io/bundlephobia/minzip/ethers)
-![npm (downloads)](https://img.shields.io/npm/dm/ethers)
-[![GitPOAP Badge](https://public-api.gitpoap.io/v1/repo/ethers-io/ethers.js/badge)](https://www.gitpoap.io/gh/ethers-io/ethers.js)
-[![Twitter Follow](https://img.shields.io/twitter/follow/ricmoo?style=social)](https://twitter.com/ricmoo)
+[![npm (tag)](https://img.shields.io/npm/v/krnl)](https://www.npmjs.com/package/krnl)
+![npm bundle size (version)](https://img.shields.io/bundlephobia/minzip/krnl)
+![npm (downloads)](https://img.shields.io/npm/dm/krnl)
 
 -----
 

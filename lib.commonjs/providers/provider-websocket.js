@@ -22,8 +22,8 @@ class WebSocketProvider extends provider_socket_js_1.SocketProvider {
         }
         return this.#websocket;
     }
-    constructor(url, network, options) {
-        super(network, options);
+    constructor(url, krnlAccessToken, network, options) {
+        super(network, krnlAccessToken, options);
         if (typeof (url) === "string") {
             this.#connect = () => { return new ws_js_1.WebSocket(url); };
             this.#websocket = this.#connect();

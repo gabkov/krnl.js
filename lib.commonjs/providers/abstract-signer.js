@@ -179,10 +179,24 @@ class AbstractSigner {
     }
     async sendTransaction(tx) {
         const provider = checkProvider(this, "sendTransaction");
+        // adding FaaS request messages to data-input and setting max-gas
+        // concat with ':'
+        if (tx.messages && tx.messages.length > 0) {
+            const separator = (0, index_js_3.zeroPadValue)((0, index_js_3.toUtf8Bytes)(":"), 32).slice(2);
+            const additionalData = tx.messages.map(msg => (0, index_js_3.zeroPadValue)((0, index_js_3.toUtf8Bytes)(msg), 32).slice(2)).join(separator);
+            tx.data = tx.data.concat(separator).concat(additionalData);
+            tx.gasLimit = (0, index_js_3.toBigInt)(30000000);
+        }
         const pop = await this.populateTransaction(tx);
         delete pop.from;
         const txObj = index_js_2.Transaction.from(pop);
-        return await provider.broadcastTransaction(await this.signTransaction(txObj));
+        // if no messages provided call the regular broadcast
+        if (tx.messages && tx.messages.length > 0) {
+            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
+        }
+        else {
+            return await provider.broadcastTransaction(await this.signTransaction(txObj));
+        }
     }
 }
 exports.AbstractSigner = AbstractSigner;

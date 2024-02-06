@@ -36,8 +36,9 @@ import type { TransactionLike } from "../transaction/index.js";
 
 import type { PerformActionRequest, Subscriber, Subscription } from "./abstract-provider.js";
 import type { Networkish } from "./network.js";
-import type { Provider, TransactionRequest, TransactionResponse } from "./provider.js";
+import type { KrnlTxRequestResponse, Provider, TransactionRequest, TransactionResponse } from "./provider.js";
 import type { Signer } from "./signer.js";
+import { Signature } from "../crypto/signature.js";
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -501,6 +502,8 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
     #network: null | Network;
     #pendingDetectNetwork: null | Promise<Network>;
 
+    #krnlAccessToken: null | string;
+
     #scheduleDrain(): void {
         if (this.#drainTimer) { return; }
 
@@ -581,7 +584,7 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
         }, stallTime);
     }
 
-    constructor(network?: Networkish, options?: JsonRpcApiProviderOptions) {
+    constructor(network?: Networkish, krnlAccessToken?: null | string, options?: JsonRpcApiProviderOptions) {
         super(network, options);
 
         this.#nextId = 1;
@@ -592,6 +595,12 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
 
         this.#network = null;
         this.#pendingDetectNetwork = null;
+        
+        if(krnlAccessToken){
+            this.#krnlAccessToken = krnlAccessToken;
+        }else{
+            this.#krnlAccessToken = null;
+        }
 
         {
             let resolve: null | ((value: void) => void) = null;
@@ -614,6 +623,24 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
                 "staticNetwork MUST match network object", "options", options);
             this.#network = staticNetwork;
         }
+    }
+
+    async sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        if(!this.#krnlAccessToken || this.#krnlAccessToken == null){
+            throw makeError("Krnl access token not provided", "INVALID_ACCESS_TOKEN");
+        }
+        
+        const message = messages.join(":");
+        
+        const res: KrnlTxRequestResponse = await this.send(
+            "krnl_transactionRequest", 
+            [{
+                accessToken: this.#krnlAccessToken, 
+                message: message 
+            }])
+        
+        res.signatureToken =  Signature.from(res.signatureToken).serialized
+        return res
     }
 
     /**
@@ -899,6 +926,12 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
                     method: "eth_sendRawTransaction",
                     args: [ req.signedTransaction ]
                 };
+            
+            case "broadcastKrnlTransaction":
+                return {
+                    method: "krnl_sendRawTransaction",
+                    args: [ req.signedTransaction ]
+                };
 
             case "getBlock":
                 if ("blockTag" in req) {
@@ -1008,7 +1041,7 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
             });
         }
 
-        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction") {
+        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction" || method === "krnl_sendRawTransaction") {
             const transaction = <TransactionLike<string>>((<any>payload).params[0]);
 
             if (message.match(/insufficient funds|base fee exceeds gas limit/i)) {
@@ -1044,6 +1077,12 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
             return makeError("unsupported operation", "UNSUPPORTED_OPERATION", {
                 operation: payload.method, info: { error, payload }
             });
+        }
+
+        if (method === "krnl_transactionRequest" && error.message) {
+            const msg = error.message;
+            return makeError(msg, "INVALID_ACCESS_TOKEN");
+            
         }
 
         return makeError("could not coalesce error", "UNKNOWN_ERROR", { error, payload });
@@ -1159,8 +1198,8 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
  */
 export abstract class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
     #pollingInterval: number;
-    constructor(network?: Networkish, options?: JsonRpcApiProviderOptions) {
-        super(network, options);
+    constructor( network?: Networkish, krnlAccessToken?: null | string, options?: JsonRpcApiProviderOptions) {
+        super(network, krnlAccessToken, options);
 
         this.#pollingInterval = 4000;
     }
@@ -1199,9 +1238,9 @@ export abstract class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
 export class JsonRpcProvider extends JsonRpcApiPollingProvider {
     #connect: FetchRequest;
 
-    constructor(url?: string | FetchRequest, network?: Networkish, options?: JsonRpcApiProviderOptions) {
+    constructor(url?: string | FetchRequest, krnlAccessToken?: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions) {
         if (url == null) { url = "http:/\/localhost:8545"; }
-        super(network, options);
+        super(network, krnlAccessToken, options);
 
         if (typeof(url) === "string") {
             this.#connect = new FetchRequest(url);

@@ -16,7 +16,9 @@ const version = process.argv[2] || null;
     console.log(change);
 
     // Find the gitHead and release date
-    const versions = await getVersions("ethers");
+    const versions = await getVersions("krnl");
+    console.log(versions);
+    
     const ver = versions.filter((c) => (c.version === change.version))[0];
     if (ver == null) { throw new Error(`no npm version found: ${ change.version }`); }
     console.log(ver);

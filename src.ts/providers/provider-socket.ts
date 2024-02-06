@@ -196,7 +196,7 @@ export class SocketProvider extends JsonRpcApiProvider {
      *
      *  If unspecified, the network will be discovered.
      */
-    constructor(network?: Networkish, _options?: JsonRpcApiProviderOptions) {
+    constructor(network?: Networkish, krnlAccessToken?: null | string, _options?: JsonRpcApiProviderOptions) {
         // Copy the options
         const options = Object.assign({ }, (_options != null) ? _options: { });
 
@@ -212,7 +212,7 @@ export class SocketProvider extends JsonRpcApiProvider {
         // this if they have just cause.
         if (options.staticNetwork == null) { options.staticNetwork = true; }
 
-        super(network, options);
+        super(network, krnlAccessToken, options);
         this.#callbacks = new Map();
         this.#subs = new Map();
         this.#pending = new Map();

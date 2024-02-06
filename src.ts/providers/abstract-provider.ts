@@ -53,7 +53,7 @@ import type {
 } from "./formatting.js";
 
 import type {
-    BlockTag, EventFilter, Filter, FilterByBlockHash, OrphanFilter,
+    BlockTag, EventFilter, Filter, FilterByBlockHash, KrnlTxRequestResponse, OrphanFilter,
     PreparedTransactionRequest, Provider, ProviderEvent,
     TransactionRequest
 } from "./provider.js";
@@ -357,6 +357,9 @@ export type PerformActionRequest = {
     method: "broadcastTransaction",
     signedTransaction: string
 } | {
+    method: "broadcastKrnlTransaction",
+    signedTransaction: string
+} | {
     method: "call",
     transaction: PerformActionTransaction, blockTag: BlockTag
 } | {
@@ -443,7 +446,7 @@ type CcipArgs = {
  *  formatting output results as well as tracking events for consistent
  *  behaviour on an eventually-consistent network.
  */
-export class AbstractProvider implements Provider {
+export abstract class AbstractProvider implements Provider {
 
     #subs: Map<string, Sub>;
     #plugins: Map<string, AbstractProviderPlugin>;
@@ -504,6 +507,8 @@ export class AbstractProvider implements Provider {
 
         this.#disableCcipRead = false;
     }
+
+    abstract sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
 
     get pollingInterval(): number { return this.#options.pollingInterval; }
 
@@ -1083,6 +1088,24 @@ export class AbstractProvider implements Provider {
                  signedTransaction: signedTx
              }),
              network: this.getNetwork()
+        });
+
+        const tx = Transaction.from(signedTx);
+        if (tx.hash !== hash) {
+            throw new Error("@TODO: the returned hash did not match");
+        }
+
+        return this._wrapTransactionResponse(<any>tx, network).replaceableTransaction(blockNumber);
+    }
+
+    async broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse> {
+        const { blockNumber, hash, network } = await resolveProperties({
+            blockNumber: this.getBlockNumber(),
+            hash: this._perform({
+                method: "broadcastKrnlTransaction",
+                signedTransaction: signedTx
+            }),
+            network: this.getNetwork()
         });
 
         const tx = Transaction.from(signedTx);

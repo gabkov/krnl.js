@@ -14,6 +14,9 @@ export class MockProvider extends AbstractProvider {
     async perform(req) {
         return await this._perform(req);
     }
+    sendKrnlTransactionRequest(messages) {
+        throw new Error("Method not implemented.");
+    }
 }
 describe("Test Fallback broadcast", function () {
     const txHash = "0x33017397ef7c7943dee3b422aec52b0a210de58d73d49c1b3ce455970f01c83a";

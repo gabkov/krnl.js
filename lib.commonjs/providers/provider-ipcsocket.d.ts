@@ -14,7 +14,7 @@ export declare class IpcSocketProvider extends SocketProvider {
      *  The connected socket.
      */
     get socket(): Socket;
-    constructor(path: string, network?: Networkish, options?: JsonRpcApiProviderOptions);
+    constructor(path: string, krnlAccessToken: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions);
     destroy(): void;
     _write(message: string): Promise<void>;
 }

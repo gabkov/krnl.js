@@ -120,7 +120,7 @@ export class InfuraWebSocketProvider extends WebSocketProvider implements Commun
             "UNSUPPORTED_OPERATION", { operation: "InfuraProvider.getWebSocketProvider()" });
 
         const url = req.url.replace(/^http/i, "ws").replace("/v3/", "/ws/v3/");
-        super(url, network);
+        super(url, null, network);
 
         defineProperties<InfuraWebSocketProvider>(this, {
             projectId: provider.projectId,
@@ -166,7 +166,7 @@ export class InfuraProvider extends JsonRpcProvider implements CommunityResourca
         if (projectSecret == null) { projectSecret = null; }
 
         const request = InfuraProvider.getRequest(network, projectId, projectSecret);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
 
         defineProperties<InfuraProvider>(this, { projectId, projectSecret });
     }

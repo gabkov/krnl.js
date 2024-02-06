@@ -144,6 +144,10 @@ export interface TransactionRequest {
      *  the fetch to unexpected parties.
      */
     enableCcipRead?: boolean;
+    /**
+     * The requested FaaS identifiers as an array. eg.: ``["KYC", "KYT"]``
+    */
+    messages?: null | string[];
 }
 /**
  *  A **PreparedTransactionRequest** is identical to a [[TransactionRequest]]
@@ -977,6 +981,13 @@ export interface FilterByBlockHash extends EventFilter {
  */
 export type ProviderEvent = string | Array<string | Array<string>> | EventFilter | OrphanFilter;
 /**
+ * The response for the krnl_transactionRequest rpc call
+ */
+export interface KrnlTxRequestResponse {
+    signatureToken: string;
+    hash: string;
+}
+/**
  *  A **Provider** is the primary method to interact with the read-only
  *  content on Ethereum.
  *
@@ -1072,6 +1083,12 @@ export interface Provider extends ContractRunner, EventEmitterable<ProviderEvent
      */
     broadcastTransaction(signedTx: string): Promise<TransactionResponse>;
     /**
+     *  Broadcasts the %%signedTx%% to the network, but before adding it
+     *  to the memory pool the tx is paused in the krnl node and
+     *  additional services can run on the transaction.
+     */
+    broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse>;
+    /**
      *  Resolves to the block for %%blockHashOrBlockTag%%.
      *
      *  If %%prefetchTxs%%, and the backend supports including transactions
@@ -1131,5 +1148,11 @@ export interface Provider extends ContractRunner, EventEmitterable<ProviderEvent
      *  the ``currentBlockNumber + N``.
      */
     waitForBlock(blockTag?: BlockTag): Promise<Block>;
+    /**
+     *  Requests a signature token, where the %%messages%% is
+     *  being signed with the configured token authority.
+     *  It returns both the signature and message hash.
+     */
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
 }
 //# sourceMappingURL=provider.d.ts.map

@@ -19,8 +19,8 @@ export class WebSocketProvider extends SocketProvider {
         }
         return this.#websocket;
     }
-    constructor(url, network, options) {
-        super(network, options);
+    constructor(url, krnlAccessToken, network, options) {
+        super(network, krnlAccessToken, options);
         if (typeof (url) === "string") {
             this.#connect = () => { return new _WebSocket(url); };
             this.#websocket = this.#connect();

@@ -67,7 +67,7 @@ export class PocketProvider extends JsonRpcProvider {
         }
         const options = { staticNetwork: network };
         const request = PocketProvider.getRequest(network, applicationId, applicationSecret);
-        super(request, network, options);
+        super(request, null, network, options);
         defineProperties(this, { applicationId, applicationSecret });
     }
     _getProvider(chainId) {

@@ -2,6 +2,7 @@ import { AbstractProvider } from "./abstract-provider.js";
 import { Network } from "./network.js";
 import type { PerformActionRequest } from "./abstract-provider.js";
 import type { Networkish } from "./network.js";
+import { KrnlTxRequestResponse } from "./provider.js";
 /**
  *  A configuration entry for how to use a [[Provider]].
  */
@@ -103,6 +104,7 @@ export declare class FallbackProvider extends AbstractProvider {
      *  for the configuration.
      */
     constructor(providers: Array<AbstractProvider | FallbackProviderConfig>, network?: Networkish, options?: FallbackProviderOptions);
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     get providerConfigs(): Array<FallbackProviderState>;
     _detectNetwork(): Promise<Network>;
     /**

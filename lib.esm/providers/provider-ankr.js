@@ -90,7 +90,7 @@ export class AnkrProvider extends JsonRpcProvider {
         // Ankr does not support filterId, so we force polling
         const options = { polling: true, staticNetwork: network };
         const request = AnkrProvider.getRequest(network, apiKey);
-        super(request, network, options);
+        super(request, null, network, options);
         defineProperties(this, { apiKey });
     }
     _getProvider(chainId) {
@@ -119,7 +119,7 @@ export class AnkrProvider extends JsonRpcProvider {
         return request;
     }
     getRpcError(payload, error) {
-        if (payload.method === "eth_sendRawTransaction") {
+        if (payload.method === "eth_sendRawTransaction" || payload.method === "krnl_sendRawTransaction") {
             if (error && error.error && error.error.message === "INTERNAL_ERROR: could not replace existing tx") {
                 error.error.message = "replacement transaction underpriced";
             }

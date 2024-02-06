@@ -60,7 +60,7 @@ function createProvider(testFunc) {
             headers, body
         };
     };
-    return new index_js_1.JsonRpcProvider(req, undefined, { cacheTimeout: -1 });
+    return new index_js_1.JsonRpcProvider(req, null, undefined, { cacheTimeout: -1 });
 }
 describe("Ensure Catchable Errors", function () {
     it("Can catch bad broadcast replies", async function () {

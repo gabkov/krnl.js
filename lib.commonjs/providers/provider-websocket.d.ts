@@ -30,7 +30,7 @@ export type WebSocketCreator = () => WebSocketLike;
 export declare class WebSocketProvider extends SocketProvider {
     #private;
     get websocket(): WebSocketLike;
-    constructor(url: string | WebSocketLike | WebSocketCreator, network?: Networkish, options?: JsonRpcApiProviderOptions);
+    constructor(url: string | WebSocketLike | WebSocketCreator, krnlAccessToken?: null | string, network?: Networkish, options?: JsonRpcApiProviderOptions);
     _write(message: string): Promise<void>;
     destroy(): Promise<void>;
 }

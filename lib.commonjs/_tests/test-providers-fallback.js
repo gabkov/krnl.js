@@ -18,6 +18,9 @@ class MockProvider extends index_js_1.AbstractProvider {
     async perform(req) {
         return await this._perform(req);
     }
+    sendKrnlTransactionRequest(messages) {
+        throw new Error("Method not implemented.");
+    }
 }
 exports.MockProvider = MockProvider;
 describe("Test Fallback broadcast", function () {

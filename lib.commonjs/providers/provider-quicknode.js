@@ -124,7 +124,7 @@ class QuickNodeProvider extends provider_jsonrpc_js_1.JsonRpcProvider {
             token = defaultToken;
         }
         const request = QuickNodeProvider.getRequest(network, token);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         (0, index_js_1.defineProperties)(this, { token });
     }
     _getProvider(chainId) {

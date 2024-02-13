@@ -130,5 +130,5 @@
     "test-esm": "mocha --trace-warnings --reporter ./reporter.cjs ./lib.esm/_tests/test-*.js"
   },
   "sideEffects": false,
-  "version": "0.1.1"
+  "version": "1.0.0"
 }

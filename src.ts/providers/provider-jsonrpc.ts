@@ -1079,7 +1079,7 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
             });
         }
 
-        if (method === "krnl_transactionRequest" && error.message) {
+        if (method === "krnl_transactionRequest" && typeof(error.message) === "string" && error.message.match(/invalid access token/i)) {
             const msg = error.message;
             return makeError(msg, "INVALID_ACCESS_TOKEN");
             

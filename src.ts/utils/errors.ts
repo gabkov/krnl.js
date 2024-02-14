@@ -149,7 +149,10 @@ export type ErrorCode =
     "ACTION_REJECTED" |
 
     // Krnl Access Token is invalid
-    "INVALID_ACCESS_TOKEN"
+    "INVALID_ACCESS_TOKEN" |
+
+    // No FaaS request was provided
+    "EMPTY_TRANSACTION_REQUEST"
 ;
 
 /**
@@ -583,6 +586,12 @@ export interface ActionRejectedError extends EthersError<"ACTION_REJECTED"> {
 export interface InvalidAccessTokenError extends EthersError<"INVALID_ACCESS_TOKEN"> {
 }
 
+/**
+ *  This Error indicates that the Krnl transaction request was sent without any FaaS request
+ */
+export interface EmptyTransactionRequestError extends EthersError<"EMPTY_TRANSACTION_REQUEST"> {
+}
+
 
 // Coding; converts an ErrorCode its Typed Error
 
@@ -620,6 +629,8 @@ export type CodedEthersError<T> =
     T extends "ACTION_REJECTED" ? ActionRejectedError:
 
     T extends "INVALID_ACCESS_TOKEN" ? InvalidAccessTokenError:
+
+    T extends "EMPTY_TRANSACTION_REQUEST" ? EmptyTransactionRequestError:
 
     never;
 

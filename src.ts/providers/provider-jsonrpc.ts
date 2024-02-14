@@ -1085,6 +1085,12 @@ export abstract class JsonRpcApiProvider extends AbstractProvider {
             
         }
 
+        if (method === "krnl_transactionRequest" && typeof(error.message) === "string" && error.message.match(/no FaaS request specified/i)) {
+            const msg = error.message;
+            return makeError(msg, "EMPTY_TRANSACTION_REQUEST");
+            
+        }
+
         return makeError("could not coalesce error", "UNKNOWN_ERROR", { error, payload });
     }
 

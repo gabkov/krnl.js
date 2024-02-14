@@ -351,7 +351,7 @@ export class JsonRpcApiProvider extends AbstractProvider {
     }
     async sendKrnlTransactionRequest(messages) {
         if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
-            throw makeError("Krnl access token not provided", "INVALID_ACCESS_TOKEN");
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
         }
         const message = messages.join(":");
         const res = await this.send("krnl_transactionRequest", [{
@@ -740,13 +740,9 @@ export class JsonRpcApiProvider extends AbstractProvider {
                 operation: payload.method, info: { error, payload }
             });
         }
-        if (method === "krnl_transactionRequest" && typeof (error.message) === "string" && error.message.match(/invalid access token/i)) {
+        if (method === "krnl_transactionRequest" && error.message) {
             const msg = error.message;
-            return makeError(msg, "INVALID_ACCESS_TOKEN");
-        }
-        if (method === "krnl_transactionRequest" && typeof (error.message) === "string" && error.message.match(/no FaaS request specified/i)) {
-            const msg = error.message;
-            return makeError(msg, "EMPTY_TRANSACTION_REQUEST");
+            return makeError(msg, "KRNL_ERROR");
         }
         return makeError("could not coalesce error", "UNKNOWN_ERROR", { error, payload });
     }

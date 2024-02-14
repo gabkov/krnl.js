@@ -3,6 +3,10 @@ Change Log
 
 This change log is maintained by `src.ts/_admin/update-changelog.ts` but may also be manually updated.
 
+krnl/v1.0.3(2024-02-14 15:34)
+---------------------------------
+  - fix release
+
 krnl/v1.0.2(2024-02-14 15:07)
 ---------------------------------
   - generalised krnl errors

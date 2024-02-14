@@ -13707,6 +13707,9 @@ function copyRequest(req) {
     if ("customData" in req) {
         result.customData = req.customData;
     }
+    if ("messages" in req) {
+        result.messages = req.messages;
+    }
     return result;
 }
 /**
@@ -18333,6 +18336,21 @@ class AbstractProvider {
         }
         return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
     }
+    async broadcastKrnlTransaction(signedTx) {
+        const { blockNumber, hash, network } = await resolveProperties({
+            blockNumber: this.getBlockNumber(),
+            hash: this._perform({
+                method: "broadcastKrnlTransaction",
+                signedTransaction: signedTx
+            }),
+            network: this.getNetwork()
+        });
+        const tx = Transaction.from(signedTx);
+        if (tx.hash !== hash) {
+            throw new Error("@TODO: the returned hash did not match");
+        }
+        return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
+    }
     async #getBlock(block, includeTransactions) {
         // @TODO: Add CustomBlockPlugin check
         if (isHexString(block, 32)) {
@@ -19156,10 +19174,24 @@ class AbstractSigner {
     }
     async sendTransaction(tx) {
         const provider = checkProvider(this, "sendTransaction");
+        // adding FaaS request messages to data-input and setting max-gas
+        // concat with ':'
+        if (tx.messages && tx.messages.length > 0) {
+            const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
+            const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
+            tx.data = tx.data.concat(separator).concat(additionalData);
+            tx.gasLimit = toBigInt(30000000);
+        }
         const pop = await this.populateTransaction(tx);
         delete pop.from;
         const txObj = Transaction.from(pop);
-        return await provider.broadcastTransaction(await this.signTransaction(txObj));
+        // if no messages provided call the regular broadcast
+        if (tx.messages && tx.messages.length > 0) {
+            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
+        }
+        else {
+            return await provider.broadcastTransaction(await this.signTransaction(txObj));
+        }
     }
 }
 /**
@@ -19643,6 +19675,7 @@ class JsonRpcApiProvider extends AbstractProvider {
     #notReady;
     #network;
     #pendingDetectNetwork;
+    #krnlAccessToken;
     #scheduleDrain() {
         if (this.#drainTimer) {
             return;
@@ -19711,7 +19744,7 @@ class JsonRpcApiProvider extends AbstractProvider {
             }
         }, stallTime);
     }
-    constructor(network, options) {
+    constructor(network, krnlAccessToken, options) {
         super(network, options);
         this.#nextId = 1;
         this.#options = Object.assign({}, defaultOptions, options || {});
@@ -19719,6 +19752,12 @@ class JsonRpcApiProvider extends AbstractProvider {
         this.#drainTimer = null;
         this.#network = null;
         this.#pendingDetectNetwork = null;
+        if (krnlAccessToken) {
+            this.#krnlAccessToken = krnlAccessToken;
+        }
+        else {
+            this.#krnlAccessToken = null;
+        }
         {
             let resolve = null;
             const promise = new Promise((_resolve) => {
@@ -19738,6 +19777,18 @@ class JsonRpcApiProvider extends AbstractProvider {
             assertArgument(network == null || staticNetwork.matches(network), "staticNetwork MUST match network object", "options", options);
             this.#network = staticNetwork;
         }
+    }
+    async sendKrnlTransactionRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
+        }
+        const message = messages.join(":");
+        const res = await this.send("krnl_transactionRequest", [{
+                accessToken: this.#krnlAccessToken,
+                message: message
+            }]);
+        res.signatureToken = Signature.from(res.signatureToken).serialized;
+        return res;
     }
     /**
      *  Returns the value associated with the option %%key%%.
@@ -19991,6 +20042,11 @@ class JsonRpcApiProvider extends AbstractProvider {
                     method: "eth_sendRawTransaction",
                     args: [req.signedTransaction]
                 };
+            case "broadcastKrnlTransaction":
+                return {
+                    method: "krnl_sendRawTransaction",
+                    args: [req.signedTransaction]
+                };
             case "getBlock":
                 if ("blockTag" in req) {
                     return {
@@ -20082,7 +20138,7 @@ class JsonRpcApiProvider extends AbstractProvider {
                 info: { payload, error }
             });
         }
-        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction") {
+        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction" || method === "krnl_sendRawTransaction") {
             const transaction = (payload.params[0]);
             if (message.match(/insufficient funds|base fee exceeds gas limit/i)) {
                 return makeError("insufficient funds for intrinsic transaction cost", "INSUFFICIENT_FUNDS", {
@@ -20112,6 +20168,10 @@ class JsonRpcApiProvider extends AbstractProvider {
             return makeError("unsupported operation", "UNSUPPORTED_OPERATION", {
                 operation: payload.method, info: { error, payload }
             });
+        }
+        if (method === "krnl_transactionRequest" && error.message) {
+            const msg = error.message;
+            return makeError(msg, "KRNL_ERROR");
         }
         return makeError("could not coalesce error", "UNKNOWN_ERROR", { error, payload });
     }
@@ -20210,8 +20270,8 @@ class JsonRpcApiProvider extends AbstractProvider {
  */
 class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
     #pollingInterval;
-    constructor(network, options) {
-        super(network, options);
+    constructor(network, krnlAccessToken, options) {
+        super(network, krnlAccessToken, options);
         this.#pollingInterval = 4000;
     }
     _getSubscriber(sub) {
@@ -20247,11 +20307,11 @@ class JsonRpcApiPollingProvider extends JsonRpcApiProvider {
  */
 class JsonRpcProvider extends JsonRpcApiPollingProvider {
     #connect;
-    constructor(url, network, options) {
+    constructor(url, krnlAccessToken, network, options) {
         if (url == null) {
             url = "http:/\/localhost:8545";
         }
-        super(network, options);
+        super(network, krnlAccessToken, options);
         if (typeof (url) === "string") {
             this.#connect = new FetchRequest(url);
         }
@@ -20426,7 +20486,7 @@ class AnkrProvider extends JsonRpcProvider {
         // Ankr does not support filterId, so we force polling
         const options = { polling: true, staticNetwork: network };
         const request = AnkrProvider.getRequest(network, apiKey);
-        super(request, network, options);
+        super(request, null, network, options);
         defineProperties(this, { apiKey });
     }
     _getProvider(chainId) {
@@ -20455,7 +20515,7 @@ class AnkrProvider extends JsonRpcProvider {
         return request;
     }
     getRpcError(payload, error) {
-        if (payload.method === "eth_sendRawTransaction") {
+        if (payload.method === "eth_sendRawTransaction" || payload.method === "krnl_sendRawTransaction") {
             if (error && error.error && error.error.message === "INTERNAL_ERROR: could not replace existing tx") {
                 error.error.message = "replacement transaction underpriced";
             }
@@ -20546,7 +20606,7 @@ class AlchemyProvider extends JsonRpcProvider {
             apiKey = defaultApiKey;
         }
         const request = AlchemyProvider.getRequest(network, apiKey);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         defineProperties(this, { apiKey });
     }
     _getProvider(chainId) {
@@ -20622,7 +20682,7 @@ class CloudflareProvider extends JsonRpcProvider {
         }
         const network = Network.from(_network);
         assertArgument(network.name === "mainnet", "unsupported network", "network", _network);
-        super("https:/\/cloudflare-eth.com/", network, { staticNetwork: network });
+        super("https:/\/cloudflare-eth.com/", null, network, { staticNetwork: network });
     }
 }
 
@@ -20706,6 +20766,11 @@ class EtherscanProvider extends AbstractProvider {
         defineProperties(this, { apiKey, network });
         // Test that the network is supported by Etherscan
         this.getBaseUrl();
+    }
+    // KRNL_NOTE: probably not required
+    // TODO:
+    sendKrnlTransactionRequest(messages) {
+        throw new Error("Method not implemented.");
     }
     /**
      *  Returns the base URL.
@@ -20928,7 +20993,7 @@ class EtherscanProvider extends AbstractProvider {
             }
         }
         if (message) {
-            if (req.method === "broadcastTransaction") {
+            if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
                 const transaction = Transaction.from(req.signedTransaction);
                 if (message.match(/replacement/i) && message.match(/underpriced/i)) {
                     assert(false, "replacement fee too low", "REPLACEMENT_UNDERPRICED", {
@@ -21028,6 +21093,13 @@ class EtherscanProvider extends AbstractProvider {
             case "broadcastTransaction":
                 return this.fetch("proxy", {
                     action: "eth_sendRawTransaction",
+                    hex: req.signedTransaction
+                }, true).catch((error) => {
+                    return this._checkError(req, error, req.signedTransaction);
+                });
+            case "broadcastKrnlTransaction":
+                return this.fetch("proxy", {
+                    action: "krnl_sendRawTransaction",
                     hex: req.signedTransaction
                 }, true).catch((error) => {
                     return this._checkError(req, error, req.signedTransaction);
@@ -21289,7 +21361,7 @@ class SocketProvider extends JsonRpcApiProvider {
      *
      *  If unspecified, the network will be discovered.
      */
-    constructor(network, _options) {
+    constructor(network, krnlAccessToken, _options) {
         // Copy the options
         const options = Object.assign({}, (_options != null) ? _options : {});
         // Support for batches is generally not supported for
@@ -21303,7 +21375,7 @@ class SocketProvider extends JsonRpcApiProvider {
         if (options.staticNetwork == null) {
             options.staticNetwork = true;
         }
-        super(network, options);
+        super(network, krnlAccessToken, options);
         this.#callbacks = new Map();
         this.#subs = new Map();
         this.#pending = new Map();
@@ -21447,8 +21519,8 @@ class WebSocketProvider extends SocketProvider {
         }
         return this.#websocket;
     }
-    constructor(url, network, options) {
-        super(network, options);
+    constructor(url, krnlAccessToken, network, options) {
+        super(network, krnlAccessToken, options);
         if (typeof (url) === "string") {
             this.#connect = () => { return new _WebSocket(url); };
             this.#websocket = this.#connect();
@@ -21600,7 +21672,7 @@ class InfuraWebSocketProvider extends WebSocketProvider {
         const req = provider._getConnection();
         assert(!req.credentials, "INFURA WebSocket project secrets unsupported", "UNSUPPORTED_OPERATION", { operation: "InfuraProvider.getWebSocketProvider()" });
         const url = req.url.replace(/^http/i, "ws").replace("/v3/", "/ws/v3/");
-        super(url, network);
+        super(url, null, network);
         defineProperties(this, {
             projectId: provider.projectId,
             projectSecret: provider.projectSecret
@@ -21646,7 +21718,7 @@ class InfuraProvider extends JsonRpcProvider {
             projectSecret = null;
         }
         const request = InfuraProvider.getRequest(network, projectId, projectSecret);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         defineProperties(this, { projectId, projectSecret });
     }
     _getProvider(chainId) {
@@ -21810,7 +21882,7 @@ class QuickNodeProvider extends JsonRpcProvider {
             token = defaultToken;
         }
         const request = QuickNodeProvider.getRequest(network, token);
-        super(request, network, { staticNetwork: network });
+        super(request, null, network, { staticNetwork: network });
         defineProperties(this, { token });
     }
     _getProvider(chainId) {
@@ -22097,6 +22169,10 @@ class FallbackProvider extends AbstractProvider {
         this.eventWorkers = 1;
         assertArgument(this.quorum <= this.#configs.reduce((a, c) => (a + c.weight), 0), "quorum exceed provider wieght", "quorum", this.quorum);
     }
+    // TODO: do we need this?
+    sendKrnlTransactionRequest(messages) {
+        throw new Error("Method not implemented.");
+    }
     get providerConfigs() {
         return this.#configs.map((c) => {
             const result = Object.assign({}, c);
@@ -22122,6 +22198,8 @@ class FallbackProvider extends AbstractProvider {
         switch (req.method) {
             case "broadcastTransaction":
                 return await provider.broadcastTransaction(req.signedTransaction);
+            case "broadcastKrnlTransaction":
+                return await provider.broadcastKrnlTransaction(req.signedTransaction);
             case "call":
                 return await provider.call(Object.assign({}, req.transaction, { blockTag: req.blockTag }));
             case "chainId":
@@ -22309,6 +22387,8 @@ class FallbackProvider extends AbstractProvider {
                 return checkQuorum(this.quorum, results);
             case "broadcastTransaction":
                 return getAnyResult(this.quorum, results);
+            case "broadcastKrnlTransaction":
+                return getAnyResult(this.quorum, results);
         }
         assert(false, "unsupported method", "UNSUPPORTED_OPERATION", {
             operation: `_perform(${stringify(req.method)})`
@@ -22368,7 +22448,7 @@ class FallbackProvider extends AbstractProvider {
         // Broadcasting a transaction is rare (ish) and already incurs
         // a cost on the user, so spamming is safe-ish. Just send it to
         // every backend.
-        if (req.method === "broadcastTransaction") {
+        if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
             // Once any broadcast provides a positive result, use it. No
             // need to wait for anyone else
             const results = this.#configs.map((c) => null);
@@ -22530,7 +22610,7 @@ function getDefaultProvider(network, options) {
     const providers = [];
     if (allowService("publicPolygon") && staticNetwork) {
         if (staticNetwork.name === "matic") {
-            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", staticNetwork, { staticNetwork }));
+            providers.push(new JsonRpcProvider("https:/\/polygon-rpc.com/", null, staticNetwork, { staticNetwork }));
         }
     }
     if (allowService("alchemy")) {
@@ -22699,8 +22779,8 @@ class BrowserProvider extends JsonRpcApiPollingProvider {
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
      */
-    constructor(ethereum, network) {
-        super(network, { batchMaxCount: 1 });
+    constructor(ethereum, krnlAccessToken, network) {
+        super(network, krnlAccessToken, { batchMaxCount: 1 });
         this.#request = async (method, params) => {
             const payload = { method, params };
             this.emit("debug", { action: "sendEip1193Request", payload });
@@ -22848,7 +22928,7 @@ class PocketProvider extends JsonRpcProvider {
         }
         const options = { staticNetwork: network };
         const request = PocketProvider.getRequest(network, applicationId, applicationSecret);
-        super(request, network, options);
+        super(request, null, network, options);
         defineProperties(this, { applicationId, applicationSecret });
     }
     _getProvider(chainId) {

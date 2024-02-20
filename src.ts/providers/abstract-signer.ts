@@ -245,12 +245,7 @@ export abstract class AbstractSigner<P extends null | Provider = null | Provider
         delete pop.from;
         const txObj = Transaction.from(pop);
         
-        // if no messages provided call the regular broadcast
-        if (tx.messages && tx.messages.length > 0) {
-            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
-        } else {
-            return await provider.broadcastTransaction(await this.signTransaction(txObj));
-        }
+        return await provider.broadcastTransaction(await this.signTransaction(txObj));
     }
 
     abstract signTransaction(tx: TransactionRequest): Promise<string>;

@@ -388,7 +388,7 @@ export class EtherscanProvider extends AbstractProvider {
         }
 
         if (message) {
-            if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction" ) {
+            if (req.method === "broadcastTransaction") {
                 const transaction = Transaction.from(req.signedTransaction);
                 if (message.match(/replacement/i) && message.match(/underpriced/i)) {
                     assert(false, "replacement fee too low", "REPLACEMENT_UNDERPRICED", {
@@ -499,14 +499,6 @@ export class EtherscanProvider extends AbstractProvider {
             case "broadcastTransaction":
                 return this.fetch("proxy", {
                     action: "eth_sendRawTransaction",
-                    hex: req.signedTransaction
-                }, true).catch((error) => {
-                    return this._checkError(req, <Error>error, req.signedTransaction);
-                });
-                
-            case "broadcastKrnlTransaction":
-                return this.fetch("proxy", {
-                    action: "krnl_sendRawTransaction",
                     hex: req.signedTransaction
                 }, true).catch((error) => {
                     return this._checkError(req, <Error>error, req.signedTransaction);

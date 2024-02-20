@@ -1923,13 +1923,6 @@ export interface Provider extends ContractRunner, EventEmitterable<ProviderEvent
      */
     broadcastTransaction(signedTx: string): Promise<TransactionResponse>;
 
-    /**
-     *  Broadcasts the %%signedTx%% to the network, but before adding it 
-     *  to the memory pool the tx is paused in the krnl node and 
-     *  additional services can run on the transaction.
-     */
-    broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse>;
-
 
     ////////////////////
     // Queries

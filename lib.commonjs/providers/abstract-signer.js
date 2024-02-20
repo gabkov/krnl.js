@@ -190,13 +190,7 @@ class AbstractSigner {
         const pop = await this.populateTransaction(tx);
         delete pop.from;
         const txObj = index_js_2.Transaction.from(pop);
-        // if no messages provided call the regular broadcast
-        if (tx.messages && tx.messages.length > 0) {
-            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
-        }
-        else {
-            return await provider.broadcastTransaction(await this.signTransaction(txObj));
-        }
+        return await provider.broadcastTransaction(await this.signTransaction(txObj));
     }
 }
 exports.AbstractSigner = AbstractSigner;

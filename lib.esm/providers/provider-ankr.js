@@ -119,7 +119,7 @@ export class AnkrProvider extends JsonRpcProvider {
         return request;
     }
     getRpcError(payload, error) {
-        if (payload.method === "eth_sendRawTransaction" || payload.method === "krnl_sendRawTransaction") {
+        if (payload.method === "eth_sendRawTransaction") {
             if (error && error.error && error.error.message === "INTERNAL_ERROR: could not replace existing tx") {
                 error.error.message = "replacement transaction underpriced";
             }

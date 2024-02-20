@@ -617,11 +617,6 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
                     method: "eth_sendRawTransaction",
                     args: [req.signedTransaction]
                 };
-            case "broadcastKrnlTransaction":
-                return {
-                    method: "krnl_sendRawTransaction",
-                    args: [req.signedTransaction]
-                };
             case "getBlock":
                 if ("blockTag" in req) {
                     return {
@@ -713,7 +708,7 @@ class JsonRpcApiProvider extends abstract_provider_js_1.AbstractProvider {
                 info: { payload, error }
             });
         }
-        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction" || method === "krnl_sendRawTransaction") {
+        if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction") {
             const transaction = (payload.params[0]);
             if (message.match(/insufficient funds|base fee exceeds gas limit/i)) {
                 return (0, index_js_5.makeError)("insufficient funds for intrinsic transaction cost", "INSUFFICIENT_FUNDS", {

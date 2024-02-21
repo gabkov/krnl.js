@@ -1,6 +1,7 @@
 import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
 import type { JsonRpcError, JsonRpcPayload, JsonRpcResult, JsonRpcSigner } from "./provider-jsonrpc.js";
 import type { Networkish } from "./network.js";
+import { KrnlTxRequestResponse } from "./provider.js";
 /**
  *  The interface to an [[link-eip-1193]] provider, which is a standard
  *  used by most injected providers, which the [[BrowserProvider]] accepts
@@ -46,6 +47,7 @@ export declare class BrowserProvider extends JsonRpcApiPollingProvider {
     constructor(ethereum: Eip1193Provider, krnlAccessToken?: null | string, network?: Networkish);
     send(method: string, params: Array<any> | Record<string, any>): Promise<any>;
     _send(payload: JsonRpcPayload | Array<JsonRpcPayload>): Promise<Array<JsonRpcResult | JsonRpcError>>;
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error;
     /**
      *  Resolves to ``true`` if the provider manages the %%address%%.

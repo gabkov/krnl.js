@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrowserProvider = void 0;
 const index_js_1 = require("../utils/index.js");
 const provider_jsonrpc_js_1 = require("./provider-jsonrpc.js");
+const ethers_js_1 = require("../ethers.js");
 ;
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
@@ -11,6 +12,8 @@ const provider_jsonrpc_js_1 = require("./provider-jsonrpc.js");
  */
 class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
     #request;
+    #krnlAccessToken;
+    #provider;
     /**
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
@@ -34,6 +37,15 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
                 throw error;
             }
         };
+        if (krnlAccessToken) {
+            this.#krnlAccessToken = krnlAccessToken;
+            // TODO: setup the node url properly
+            this.#provider = new ethers_js_1.JsonRpcProvider("http://127.0.0.1:8080", krnlAccessToken);
+        }
+        else {
+            this.#krnlAccessToken = null;
+            this.#provider = null;
+        }
     }
     async send(method, params) {
         await this._start();
@@ -51,6 +63,12 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
                     error: { code: e.code, data: e.data, message: e.message }
                 }];
         }
+    }
+    async sendKrnlTransactionRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw (0, index_js_1.makeError)("Krnl access token not provided", "KRNL_ERROR");
+        }
+        return this.#provider.sendKrnlTransactionRequest(messages);
     }
     getRpcError(payload, error) {
         error = JSON.parse(JSON.stringify(error));

@@ -1,4 +1,4 @@
-import { assertArgument } from "../utils/index.js";
+import { assertArgument, makeError } from "../utils/index.js";
 
 import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
 
@@ -7,6 +7,8 @@ import type {
     JsonRpcSigner
 } from "./provider-jsonrpc.js";
 import type { Networkish } from "./network.js";
+import { KrnlTxRequestResponse } from "./provider.js";
+import { JsonRpcProvider } from "../ethers.js";
 
 /**
  *  The interface to an [[link-eip-1193]] provider, which is a standard
@@ -44,6 +46,9 @@ export type DebugEventBrowserProvider = {
 export class BrowserProvider extends JsonRpcApiPollingProvider {
     #request: (method: string, params: Array<any> | Record<string, any>) => Promise<any>;
 
+    #krnlAccessToken: null | string;
+    #provider: null | JsonRpcProvider;
+
     /**
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
@@ -67,6 +72,16 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
                 throw error;
             }
         };
+
+        if(krnlAccessToken){
+            this.#krnlAccessToken = krnlAccessToken;
+            // TODO: setup the node url properly
+            this.#provider = new JsonRpcProvider("http://127.0.0.1:8080", krnlAccessToken);
+        }else{
+            this.#krnlAccessToken = null;
+            this.#provider = null;
+        }
+        
     }
 
     async send(method: string, params: Array<any> | Record<string, any>): Promise<any> {
@@ -87,6 +102,14 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
                 error: { code: e.code, data: e.data, message: e.message }
             } ];
         }
+    }
+
+    async sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        if(!this.#krnlAccessToken || this.#krnlAccessToken == null){
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
+        }
+        
+        return this.#provider!.sendKrnlTransactionRequest(messages)
     }
 
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error {

@@ -1,5 +1,6 @@
-import { assertArgument } from "../utils/index.js";
+import { assertArgument, makeError } from "../utils/index.js";
 import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
+import { JsonRpcProvider } from "../ethers.js";
 ;
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
@@ -8,6 +9,8 @@ import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
  */
 export class BrowserProvider extends JsonRpcApiPollingProvider {
     #request;
+    #krnlAccessToken;
+    #provider;
     /**
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
@@ -31,6 +34,15 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
                 throw error;
             }
         };
+        if (krnlAccessToken) {
+            this.#krnlAccessToken = krnlAccessToken;
+            // TODO: setup the node url properly
+            this.#provider = new JsonRpcProvider("http://127.0.0.1:8080", krnlAccessToken);
+        }
+        else {
+            this.#krnlAccessToken = null;
+            this.#provider = null;
+        }
     }
     async send(method, params) {
         await this._start();
@@ -48,6 +60,12 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
                     error: { code: e.code, data: e.data, message: e.message }
                 }];
         }
+    }
+    async sendKrnlTransactionRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
+        }
+        return this.#provider.sendKrnlTransactionRequest(messages);
     }
     getRpcError(payload, error) {
         error = JSON.parse(JSON.stringify(error));

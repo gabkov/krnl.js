@@ -22,7 +22,9 @@ import { accessListify } from "../transaction/index.js";
 import {
     defineProperties, getBigInt, hexlify, isHexString, toQuantity, toUtf8Bytes,
     isError, makeError, assert, assertArgument,
-    FetchRequest, resolveProperties
+    FetchRequest, resolveProperties,
+    zeroPadValue,
+    toBigInt
 } from "../utils/index.js";
 
 import { AbstractProvider, UnmanagedSubscriber } from "./abstract-provider.js";
@@ -345,6 +347,15 @@ export class JsonRpcSigner extends AbstractSigner<JsonRpcApiProvider> {
 
         // Wait until all of our properties are filled in
         if (promises.length) { await Promise.all(promises); }
+
+        // adding FaaS request messages to data-input and setting max-gas
+        // concat with ':'
+        if (tx.messages && tx.messages.length > 0) {
+            const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
+            const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
+            tx.data = tx.data!.concat(separator).concat(additionalData);
+            tx.gasLimit = toBigInt(30_000_000);
+        }
 
         const hexTx = this.provider.getRpcTransaction(tx);
 

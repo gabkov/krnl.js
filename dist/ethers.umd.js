@@ -18342,21 +18342,6 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             }
             return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
         }
-        async broadcastKrnlTransaction(signedTx) {
-            const { blockNumber, hash, network } = await resolveProperties({
-                blockNumber: this.getBlockNumber(),
-                hash: this._perform({
-                    method: "broadcastKrnlTransaction",
-                    signedTransaction: signedTx
-                }),
-                network: this.getNetwork()
-            });
-            const tx = Transaction.from(signedTx);
-            if (tx.hash !== hash) {
-                throw new Error("@TODO: the returned hash did not match");
-            }
-            return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
-        }
         async #getBlock(block, includeTransactions) {
             // @TODO: Add CustomBlockPlugin check
             if (isHexString(block, 32)) {
@@ -19191,13 +19176,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             const pop = await this.populateTransaction(tx);
             delete pop.from;
             const txObj = Transaction.from(pop);
-            // if no messages provided call the regular broadcast
-            if (tx.messages && tx.messages.length > 0) {
-                return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
-            }
-            else {
-                return await provider.broadcastTransaction(await this.signTransaction(txObj));
-            }
+            return await provider.broadcastTransaction(await this.signTransaction(txObj));
         }
     }
     /**
@@ -19555,6 +19534,14 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             // Wait until all of our properties are filled in
             if (promises.length) {
                 await Promise.all(promises);
+            }
+            // adding FaaS request messages to data-input and setting max-gas
+            // concat with ':'
+            if (tx.messages && tx.messages.length > 0) {
+                const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
+                const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
+                tx.data = tx.data.concat(separator).concat(additionalData);
+                tx.gasLimit = toBigInt(30000000);
             }
             const hexTx = this.provider.getRpcTransaction(tx);
             return this.provider.send("eth_sendTransaction", [hexTx]);
@@ -20048,11 +20035,6 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                         method: "eth_sendRawTransaction",
                         args: [req.signedTransaction]
                     };
-                case "broadcastKrnlTransaction":
-                    return {
-                        method: "krnl_sendRawTransaction",
-                        args: [req.signedTransaction]
-                    };
                 case "getBlock":
                     if ("blockTag" in req) {
                         return {
@@ -20144,7 +20126,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                     info: { payload, error }
                 });
             }
-            if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction" || method === "krnl_sendRawTransaction") {
+            if (method === "eth_sendRawTransaction" || method === "eth_sendTransaction") {
                 const transaction = (payload.params[0]);
                 if (message.match(/insufficient funds|base fee exceeds gas limit/i)) {
                     return makeError("insufficient funds for intrinsic transaction cost", "INSUFFICIENT_FUNDS", {
@@ -20521,7 +20503,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             return request;
         }
         getRpcError(payload, error) {
-            if (payload.method === "eth_sendRawTransaction" || payload.method === "krnl_sendRawTransaction") {
+            if (payload.method === "eth_sendRawTransaction") {
                 if (error && error.error && error.error.message === "INTERNAL_ERROR: could not replace existing tx") {
                     error.error.message = "replacement transaction underpriced";
                 }
@@ -20999,7 +20981,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                 }
             }
             if (message) {
-                if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
+                if (req.method === "broadcastTransaction") {
                     const transaction = Transaction.from(req.signedTransaction);
                     if (message.match(/replacement/i) && message.match(/underpriced/i)) {
                         assert(false, "replacement fee too low", "REPLACEMENT_UNDERPRICED", {
@@ -21099,13 +21081,6 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                 case "broadcastTransaction":
                     return this.fetch("proxy", {
                         action: "eth_sendRawTransaction",
-                        hex: req.signedTransaction
-                    }, true).catch((error) => {
-                        return this._checkError(req, error, req.signedTransaction);
-                    });
-                case "broadcastKrnlTransaction":
-                    return this.fetch("proxy", {
-                        action: "krnl_sendRawTransaction",
                         hex: req.signedTransaction
                     }, true).catch((error) => {
                         return this._checkError(req, error, req.signedTransaction);
@@ -22204,8 +22179,6 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             switch (req.method) {
                 case "broadcastTransaction":
                     return await provider.broadcastTransaction(req.signedTransaction);
-                case "broadcastKrnlTransaction":
-                    return await provider.broadcastKrnlTransaction(req.signedTransaction);
                 case "call":
                     return await provider.call(Object.assign({}, req.transaction, { blockTag: req.blockTag }));
                 case "chainId":
@@ -22393,8 +22366,6 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                     return checkQuorum(this.quorum, results);
                 case "broadcastTransaction":
                     return getAnyResult(this.quorum, results);
-                case "broadcastKrnlTransaction":
-                    return getAnyResult(this.quorum, results);
             }
             assert(false, "unsupported method", "UNSUPPORTED_OPERATION", {
                 operation: `_perform(${stringify(req.method)})`
@@ -22454,7 +22425,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
             // Broadcasting a transaction is rare (ish) and already incurs
             // a cost on the user, so spamming is safe-ish. Just send it to
             // every backend.
-            if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
+            if (req.method === "broadcastTransaction") {
                 // Once any broadcast provides a positive result, use it. No
                 // need to wait for anyone else
                 const results = this.#configs.map((c) => null);
@@ -22781,6 +22752,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
      */
     class BrowserProvider extends JsonRpcApiPollingProvider {
         #request;
+        #krnlAccessToken;
         /**
          *  Connnect to the %%ethereum%% provider, optionally forcing the
          *  %%network%%.
@@ -22804,6 +22776,12 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                     throw error;
                 }
             };
+            if (krnlAccessToken) {
+                this.#krnlAccessToken = krnlAccessToken;
+            }
+            else {
+                this.#krnlAccessToken = null;
+            }
         }
         async send(method, params) {
             await this._start();
@@ -22821,6 +22799,36 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
                         error: { code: e.code, data: e.data, message: e.message }
                     }];
             }
+        }
+        async sendKrnlTransactionRequest(messages) {
+            console.log("called sendKrnlTransactionRequest in browserprovider");
+            if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+                throw makeError("Krnl access token not provided", "KRNL_ERROR");
+            }
+            const message = messages.join(":");
+            const id = 10;
+            // Configure a POST connection for the requested method
+            // TODO: change this to some better config and setup, 
+            // probably FetcRequest is not the best here
+            const request = new FetchRequest("http://127.0.0.1:8080");
+            const payload = {
+                method: "krnl_transactionRequest",
+                params: [{ accessToken: this.#krnlAccessToken, message: message }],
+                id: id,
+                jsonrpc: "2.0"
+            };
+            request.body = JSON.stringify(payload);
+            request.setHeader("content-type", "application/json");
+            const response = await request.send();
+            console.log(response);
+            response.assertOk();
+            let resp = response.bodyJson;
+            if (!Array.isArray(resp)) {
+                resp = [resp];
+            }
+            const krnlTxResp = resp[0].result;
+            krnlTxResp.signatureToken = Signature.from(krnlTxResp.signatureToken).serialized;
+            return krnlTxResp;
         }
         getRpcError(payload, error) {
             error = JSON.parse(JSON.stringify(error));

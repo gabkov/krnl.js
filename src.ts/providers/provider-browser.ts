@@ -37,6 +37,15 @@ export type DebugEventBrowserProvider = {
     error: Error
 };
 
+export type GetSnapsResponse = Record<string, Snap>;
+
+export type Snap = {
+  permissionName: string;
+  id: string;
+  version: string;
+  initialPermissions: Record<string, unknown>;
+};
+
 
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
@@ -111,6 +120,53 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
         
         return this.#provider!.sendKrnlTransactionRequest(messages)
     }
+
+    async getFaaSRequestsFromSnap(): Promise<string[]>{
+        const snapId = "npm:krnl-demo-snap"
+        const snap = await this.getSnap(snapId, "0.1.1");
+        
+        // if not installed then install
+        if(snap === undefined){
+            await this.#request('wallet_requestSnaps', {[snapId]: {}});
+        }
+
+        const res = await this.#request(
+          'wallet_invokeSnap',
+          { snapId: snapId, request: { method: 'faas' } },
+        );
+
+        // TODO: add validation
+        return res.toUpperCase().split(" ")
+    }
+        
+    /**
+     * Get the installed snaps in MetaMask.
+     *
+     * @returns The snaps installed in MetaMask.
+     */
+    async getSnaps(): Promise<GetSnapsResponse> {
+        return (await this.#request('wallet_getSnaps', {})) as unknown as GetSnapsResponse;
+    }
+
+
+    /* Get the snap from MetaMask.
+    *
+    * @param version - The version of the snap to install (optional).
+    * @returns The snap object returned by the extension.
+    */
+    async getSnap(id: string, version?: string): Promise<Snap | undefined> {
+        try {
+            const snaps = await this.getSnaps();
+
+            return Object.values(snaps).find(
+                (snap) =>
+                    snap.id === id && (!version || snap.version === version),
+            );
+        } catch (error) {
+            console.log('Failed to obtain installed snap', error);
+            return undefined;
+        }
+    };
 
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error {
 

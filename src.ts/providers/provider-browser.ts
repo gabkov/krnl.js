@@ -151,6 +151,7 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
 
     /* Get the snap from MetaMask.
     *
+    * @param id - The id of the installed snap
     * @param version - The version of the snap to install (optional).
     * @returns The snap object returned by the extension.
     */

@@ -123,7 +123,7 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
 
     async getFaaSRequestsFromSnap(): Promise<string[]>{
         const snapId = "npm:krnl-demo-snap"
-        const snap = await this.getSnap(snapId, "0.1.1");
+        const snap = await this.getSnap(snapId, "0.1.2");
         
         // if not installed then install
         if(snap === undefined){
@@ -135,7 +135,10 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
           { snapId: snapId, request: { method: 'faas' } },
         );
 
-        // TODO: add validation
+        if (res === null) {
+            throw makeError("FaaS not provided", "KRNL_ERROR");
+        }
+        
         return res.toUpperCase().split(" ")
     }
         

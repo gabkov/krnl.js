@@ -72,13 +72,15 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
     }
     async getFaaSRequestsFromSnap() {
         const snapId = "npm:krnl-demo-snap";
-        const snap = await this.getSnap(snapId, "0.1.1");
+        const snap = await this.getSnap(snapId, "0.1.2");
         // if not installed then install
         if (snap === undefined) {
             await this.#request('wallet_requestSnaps', { [snapId]: {} });
         }
         const res = await this.#request('wallet_invokeSnap', { snapId: snapId, request: { method: 'faas' } });
-        // TODO: add validation
+        if (res === null) {
+            throw (0, index_js_1.makeError)("FaaS not provided", "KRNL_ERROR");
+        }
         return res.toUpperCase().split(" ");
     }
     /**
@@ -91,6 +93,7 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
     }
     /* Get the snap from MetaMask.
     *
+    * @param id - The id of the installed snap
     * @param version - The version of the snap to install (optional).
     * @returns The snap object returned by the extension.
     */

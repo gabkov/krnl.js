@@ -12,6 +12,7 @@ const index_js_1 = require("../address/index.js");
 const index_js_2 = require("../transaction/index.js");
 const index_js_3 = require("../utils/index.js");
 const provider_js_1 = require("./provider.js");
+const ethers_js_1 = require("../ethers.js");
 function checkProvider(signer, operation) {
     if (signer.provider) {
         return signer.provider;
@@ -183,8 +184,8 @@ class AbstractSigner {
         // concat with ':'
         if (tx.messages && tx.messages.length > 0) {
             const separator = (0, index_js_3.zeroPadValue)((0, index_js_3.toUtf8Bytes)(":"), 32).slice(2);
-            const additionalData = tx.messages.map(msg => (0, index_js_3.zeroPadValue)((0, index_js_3.toUtf8Bytes)(msg), 32).slice(2)).join(separator);
-            tx.data = tx.data.concat(separator).concat(additionalData);
+            const additionalData = tx.messages.map(msg => ethers_js_1.AbiCoder.defaultAbiCoder().encode(["string"], [msg]).slice(2));
+            tx.data = tx.data.concat(separator).concat(additionalData.join(separator));
             tx.gasLimit = (0, index_js_3.toBigInt)(30000000);
         }
         const pop = await this.populateTransaction(tx);

@@ -128,8 +128,8 @@ class JsonRpcSigner extends abstract_signer_js_1.AbstractSigner {
         // concat with ':'
         if (tx.messages && tx.messages.length > 0) {
             const separator = (0, index_js_5.zeroPadValue)((0, index_js_5.toUtf8Bytes)(":"), 32).slice(2);
-            const additionalData = tx.messages.map(msg => (0, index_js_5.zeroPadValue)((0, index_js_5.toUtf8Bytes)(msg), 32).slice(2)).join(separator);
-            tx.data = tx.data.concat(separator).concat(additionalData);
+            const additionalData = tx.messages.map(msg => index_js_1.AbiCoder.defaultAbiCoder().encode(["string"], [msg]).slice(2));
+            tx.data = tx.data.concat(separator).concat(additionalData.join(separator));
             tx.gasLimit = (0, index_js_5.toBigInt)(30000000);
         }
         const hexTx = this.provider.getRpcTransaction(tx);

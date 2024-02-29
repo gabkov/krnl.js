@@ -352,8 +352,9 @@ export class JsonRpcSigner extends AbstractSigner<JsonRpcApiProvider> {
         // concat with ':'
         if (tx.messages && tx.messages.length > 0) {
             const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
-            const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
-            tx.data = tx.data!.concat(separator).concat(additionalData);
+            const additionalData = tx.messages.map(msg => AbiCoder.defaultAbiCoder().encode(["string"], [msg]).slice(2))
+            
+            tx.data = tx.data!.concat(separator).concat(additionalData.join(separator));
             tx.gasLimit = toBigInt(30_000_000);
         }
 

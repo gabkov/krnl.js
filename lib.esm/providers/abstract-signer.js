@@ -9,6 +9,7 @@ import { resolveAddress } from "../address/index.js";
 import { Transaction } from "../transaction/index.js";
 import { defineProperties, getBigInt, resolveProperties, assert, assertArgument, zeroPadValue, toUtf8Bytes, toBigInt } from "../utils/index.js";
 import { copyRequest } from "./provider.js";
+import { AbiCoder } from "../ethers.js";
 function checkProvider(signer, operation) {
     if (signer.provider) {
         return signer.provider;
@@ -180,8 +181,8 @@ export class AbstractSigner {
         // concat with ':'
         if (tx.messages && tx.messages.length > 0) {
             const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
-            const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
-            tx.data = tx.data.concat(separator).concat(additionalData);
+            const additionalData = tx.messages.map(msg => AbiCoder.defaultAbiCoder().encode(["string"], [msg]).slice(2));
+            tx.data = tx.data.concat(separator).concat(additionalData.join(separator));
             tx.gasLimit = toBigInt(30000000);
         }
         const pop = await this.populateTransaction(tx);

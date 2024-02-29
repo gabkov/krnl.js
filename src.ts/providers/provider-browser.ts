@@ -122,12 +122,13 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
     }
 
     async getFaaSRequestsFromSnap(): Promise<string[]>{
-        const snapId = "npm:krnl-demo-snap"
-        const snap = await this.getSnap(snapId, "0.1.2");
+        const snapId = "npm:krnl-demo-snap";
+        const version = "0.1.3";
+        const snap = await this.getSnap(snapId, version);
         
         // if not installed then install
         if(snap === undefined){
-            await this.#request('wallet_requestSnaps', {[snapId]: {}});
+            await this.#request('wallet_requestSnaps', {[snapId]: {"version" : version}});
         }
 
         const res = await this.#request(
@@ -139,7 +140,7 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
             throw makeError("FaaS not provided", "KRNL_ERROR");
         }
         
-        return res.toUpperCase().split(" ")
+        return res.toUpperCase().split(",");
     }
         
     /**

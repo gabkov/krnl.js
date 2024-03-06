@@ -212,6 +212,7 @@ export declare abstract class JsonRpcApiProvider extends AbstractProvider {
     #private;
     constructor(network?: Networkish, krnlAccessToken?: null | string, options?: JsonRpcApiProviderOptions);
     sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
+    sendAaUserOperationRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
     /**
      *  Returns the value associated with the option %%key%%.
      *

@@ -3,7 +3,7 @@ const __$G = (typeof globalThis !== 'undefined' ? globalThis: typeof window !== 
 /**
  *  The current version of Ethers.
  */
-const version = "6.10.1";
+const version = "1.0.4";
 
 /**
  *  Property helper functions.
@@ -19777,6 +19777,18 @@ class JsonRpcApiProvider extends AbstractProvider {
         res.signatureToken = Signature.from(res.signatureToken).serialized;
         return res;
     }
+    async sendAaUserOperationRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
+        }
+        const message = messages.join(":");
+        const res = await this.send("aa_sendUserOperation", [{
+                accessToken: this.#krnlAccessToken,
+                message: message
+            }]);
+        res.signatureToken = Signature.from(res.signatureToken).serialized;
+        return res;
+    }
     /**
      *  Returns the value associated with the option %%key%%.
      *
@@ -20152,6 +20164,10 @@ class JsonRpcApiProvider extends AbstractProvider {
             });
         }
         if (method === "krnl_transactionRequest" && error.message) {
+            const msg = error.message;
+            return makeError(msg, "KRNL_ERROR");
+        }
+        if (method === "aa_sendUserOperation" && error.message) {
             const msg = error.message;
             return makeError(msg, "KRNL_ERROR");
         }

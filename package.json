@@ -14,6 +14,7 @@
     "@noble/hashes": "1.3.2",
     "@types/node": "18.15.13",
     "aes-js": "4.0.0-beta.5",
+    "krnl": "^1.0.3",
     "tslib": "2.4.0",
     "ws": "8.5.0"
   },
@@ -93,7 +94,7 @@
       "url": "https://www.buymeacoffee.com/ricmoo"
     }
   ],
-  "gitHead": "56c1361ee83db8b68859caf0850c95ff70e7e306",
+  "gitHead": "4cdd9a77acf754ea39f9c17b1e93ae9a5ebcc5e6",
   "homepage": "https://ethers.org",
   "keywords": [
     "ethersjs",

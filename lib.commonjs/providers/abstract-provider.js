@@ -745,21 +745,6 @@ class AbstractProvider {
         }
         return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
     }
-    async broadcastKrnlTransaction(signedTx) {
-        const { blockNumber, hash, network } = await (0, index_js_6.resolveProperties)({
-            blockNumber: this.getBlockNumber(),
-            hash: this._perform({
-                method: "broadcastKrnlTransaction",
-                signedTransaction: signedTx
-            }),
-            network: this.getNetwork()
-        });
-        const tx = index_js_5.Transaction.from(signedTx);
-        if (tx.hash !== hash) {
-            throw new Error("@TODO: the returned hash did not match");
-        }
-        return this._wrapTransactionResponse(tx, network).replaceableTransaction(blockNumber);
-    }
     async #getBlock(block, includeTransactions) {
         // @TODO: Add CustomBlockPlugin check
         if ((0, index_js_6.isHexString)(block, 32)) {

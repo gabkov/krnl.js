@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrowserProvider = void 0;
 const index_js_1 = require("../utils/index.js");
 const provider_jsonrpc_js_1 = require("./provider-jsonrpc.js");
+const ethers_js_1 = require("../ethers.js");
 ;
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
@@ -11,6 +12,8 @@ const provider_jsonrpc_js_1 = require("./provider-jsonrpc.js");
  */
 class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
     #request;
+    #krnlAccessToken;
+    #provider;
     /**
      *  Connnect to the %%ethereum%% provider, optionally forcing the
      *  %%network%%.
@@ -34,6 +37,15 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
                 throw error;
             }
         };
+        if (krnlAccessToken) {
+            this.#krnlAccessToken = krnlAccessToken;
+            // TODO: setup the node url properly
+            this.#provider = new ethers_js_1.JsonRpcProvider("http://127.0.0.1:8080", krnlAccessToken);
+        }
+        else {
+            this.#krnlAccessToken = null;
+            this.#provider = null;
+        }
     }
     async send(method, params) {
         await this._start();
@@ -52,6 +64,51 @@ class BrowserProvider extends provider_jsonrpc_js_1.JsonRpcApiPollingProvider {
                 }];
         }
     }
+    async sendKrnlTransactionRequest(messages) {
+        if (!this.#krnlAccessToken || this.#krnlAccessToken == null) {
+            throw (0, index_js_1.makeError)("Krnl access token not provided", "KRNL_ERROR");
+        }
+        return this.#provider.sendKrnlTransactionRequest(messages);
+    }
+    async getFaaSRequestsFromSnap() {
+        const snapId = "npm:krnl-demo-snap";
+        const version = "0.1.3";
+        const snap = await this.getSnap(snapId, version);
+        // if not installed then install
+        if (snap === undefined) {
+            await this.#request('wallet_requestSnaps', { [snapId]: { "version": version } });
+        }
+        const res = await this.#request('wallet_invokeSnap', { snapId: snapId, request: { method: 'faas' } });
+        if (res === null) {
+            throw (0, index_js_1.makeError)("FaaS not provided", "KRNL_ERROR");
+        }
+        return res.toUpperCase().split(",");
+    }
+    /**
+     * Get the installed snaps in MetaMask.
+     *
+     * @returns The snaps installed in MetaMask.
+     */
+    async getSnaps() {
+        return (await this.#request('wallet_getSnaps', {}));
+    }
+    /* Get the snap from MetaMask.
+    *
+    * @param id - The id of the installed snap
+    * @param version - The version of the snap to install (optional).
+    * @returns The snap object returned by the extension.
+    */
+    async getSnap(id, version) {
+        try {
+            const snaps = await this.getSnaps();
+            return Object.values(snaps).find((snap) => snap.id === id && (!version || snap.version === version));
+        }
+        catch (error) {
+            console.log('Failed to obtain installed snap', error);
+            return undefined;
+        }
+    }
+    ;
     getRpcError(payload, error) {
         error = JSON.parse(JSON.stringify(error));
         // EIP-1193 gives us some machine-readable error codes, so rewrite

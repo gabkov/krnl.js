@@ -357,9 +357,6 @@ export type PerformActionRequest = {
     method: "broadcastTransaction",
     signedTransaction: string
 } | {
-    method: "broadcastKrnlTransaction",
-    signedTransaction: string
-} | {
     method: "call",
     transaction: PerformActionTransaction, blockTag: BlockTag
 } | {
@@ -1088,24 +1085,6 @@ export abstract class AbstractProvider implements Provider {
                  signedTransaction: signedTx
              }),
              network: this.getNetwork()
-        });
-
-        const tx = Transaction.from(signedTx);
-        if (tx.hash !== hash) {
-            throw new Error("@TODO: the returned hash did not match");
-        }
-
-        return this._wrapTransactionResponse(<any>tx, network).replaceableTransaction(blockNumber);
-    }
-
-    async broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse> {
-        const { blockNumber, hash, network } = await resolveProperties({
-            blockNumber: this.getBlockNumber(),
-            hash: this._perform({
-                method: "broadcastKrnlTransaction",
-                signedTransaction: signedTx
-            }),
-            network: this.getNetwork()
         });
 
         const tx = Transaction.from(signedTx);

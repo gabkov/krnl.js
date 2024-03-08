@@ -24,6 +24,7 @@ import type {
     BlockTag, Provider, TransactionRequest, TransactionResponse
 } from "./provider.js";
 import type { Signer } from "./signer.js";
+import { AbiCoder } from "../ethers.js";
 
 
 function checkProvider(signer: AbstractSigner, operation: string): Provider {
@@ -236,8 +237,9 @@ export abstract class AbstractSigner<P extends null | Provider = null | Provider
         // concat with ':'
         if (tx.messages && tx.messages.length > 0) {
             const separator = zeroPadValue(toUtf8Bytes(":"), 32).slice(2);
-            const additionalData = tx.messages.map(msg => zeroPadValue(toUtf8Bytes(msg), 32).slice(2)).join(separator);
-            tx.data = tx.data!.concat(separator).concat(additionalData);
+            const additionalData = tx.messages.map(msg => AbiCoder.defaultAbiCoder().encode(["string"], [msg]).slice(2))
+            
+            tx.data = tx.data!.concat(separator).concat(additionalData.join(separator));
             tx.gasLimit = toBigInt(30_000_000);
         }
 
@@ -245,12 +247,7 @@ export abstract class AbstractSigner<P extends null | Provider = null | Provider
         delete pop.from;
         const txObj = Transaction.from(pop);
         
-        // if no messages provided call the regular broadcast
-        if (tx.messages && tx.messages.length > 0) {
-            return await provider.broadcastKrnlTransaction(await this.signTransaction(txObj));
-        } else {
-            return await provider.broadcastTransaction(await this.signTransaction(txObj));
-        }
+        return await provider.broadcastTransaction(await this.signTransaction(txObj));
     }
 
     abstract signTransaction(tx: TransactionRequest): Promise<string>;

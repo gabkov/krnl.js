@@ -318,7 +318,7 @@ class EtherscanProvider extends abstract_provider_js_1.AbstractProvider {
             }
         }
         if (message) {
-            if (req.method === "broadcastTransaction" || req.method === "broadcastKrnlTransaction") {
+            if (req.method === "broadcastTransaction") {
                 const transaction = index_js_3.Transaction.from(req.signedTransaction);
                 if (message.match(/replacement/i) && message.match(/underpriced/i)) {
                     (0, index_js_4.assert)(false, "replacement fee too low", "REPLACEMENT_UNDERPRICED", {
@@ -418,13 +418,6 @@ class EtherscanProvider extends abstract_provider_js_1.AbstractProvider {
             case "broadcastTransaction":
                 return this.fetch("proxy", {
                     action: "eth_sendRawTransaction",
-                    hex: req.signedTransaction
-                }, true).catch((error) => {
-                    return this._checkError(req, error, req.signedTransaction);
-                });
-            case "broadcastKrnlTransaction":
-                return this.fetch("proxy", {
-                    action: "krnl_sendRawTransaction",
                     hex: req.signedTransaction
                 }, true).catch((error) => {
                     return this._checkError(req, error, req.signedTransaction);

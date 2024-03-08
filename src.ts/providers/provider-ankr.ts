@@ -138,7 +138,7 @@ export class AnkrProvider extends JsonRpcProvider implements CommunityResourcabl
     }
 
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error {
-        if (payload.method === "eth_sendRawTransaction" || payload.method === "krnl_sendRawTransaction") {
+        if (payload.method === "eth_sendRawTransaction") {
             if (error && error.error && error.error.message === "INTERNAL_ERROR: could not replace existing tx") {
                 error.error.message = "replacement transaction underpriced";
             }

@@ -1,6 +1,7 @@
 import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
 import type { JsonRpcError, JsonRpcPayload, JsonRpcResult, JsonRpcSigner } from "./provider-jsonrpc.js";
 import type { Networkish } from "./network.js";
+import { KrnlTxRequestResponse } from "./provider.js";
 /**
  *  The interface to an [[link-eip-1193]] provider, which is a standard
  *  used by most injected providers, which the [[BrowserProvider]] accepts
@@ -32,6 +33,13 @@ export type DebugEventBrowserProvider = {
     action: "receiveEip1193Error";
     error: Error;
 };
+export type GetSnapsResponse = Record<string, Snap>;
+export type Snap = {
+    permissionName: string;
+    id: string;
+    version: string;
+    initialPermissions: Record<string, unknown>;
+};
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
  *  adheres to the [[link-eip-1193]] standard, which most (if not all)
@@ -46,6 +54,15 @@ export declare class BrowserProvider extends JsonRpcApiPollingProvider {
     constructor(ethereum: Eip1193Provider, krnlAccessToken?: null | string, network?: Networkish);
     send(method: string, params: Array<any> | Record<string, any>): Promise<any>;
     _send(payload: JsonRpcPayload | Array<JsonRpcPayload>): Promise<Array<JsonRpcResult | JsonRpcError>>;
+    sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse>;
+    getFaaSRequestsFromSnap(): Promise<string[]>;
+    /**
+     * Get the installed snaps in MetaMask.
+     *
+     * @returns The snaps installed in MetaMask.
+     */
+    getSnaps(): Promise<GetSnapsResponse>;
+    getSnap(id: string, version?: string): Promise<Snap | undefined>;
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error;
     /**
      *  Resolves to ``true`` if the provider manages the %%address%%.

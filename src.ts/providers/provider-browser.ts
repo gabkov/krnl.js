@@ -1,4 +1,4 @@
-import { assertArgument } from "../utils/index.js";
+import { assertArgument, makeError } from "../utils/index.js";
 
 import { JsonRpcApiPollingProvider } from "./provider-jsonrpc.js";
 
@@ -7,6 +7,8 @@ import type {
     JsonRpcSigner
 } from "./provider-jsonrpc.js";
 import type { Networkish } from "./network.js";
+import { KrnlTxRequestResponse } from "./provider.js";
+import { JsonRpcProvider } from "../ethers.js";
 
 /**
  *  The interface to an [[link-eip-1193]] provider, which is a standard
@@ -35,6 +37,15 @@ export type DebugEventBrowserProvider = {
     error: Error
 };
 
+export type GetSnapsResponse = Record<string, Snap>;
+
+export type Snap = {
+  permissionName: string;
+  id: string;
+  version: string;
+  initialPermissions: Record<string, unknown>;
+};
+
 
 /**
  *  A **BrowserProvider** is intended to wrap an injected provider which
@@ -43,6 +54,9 @@ export type DebugEventBrowserProvider = {
  */
 export class BrowserProvider extends JsonRpcApiPollingProvider {
     #request: (method: string, params: Array<any> | Record<string, any>) => Promise<any>;
+
+    #krnlAccessToken: null | string;
+    #provider: null | JsonRpcProvider;
 
     /**
      *  Connnect to the %%ethereum%% provider, optionally forcing the
@@ -67,6 +81,16 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
                 throw error;
             }
         };
+
+        if(krnlAccessToken){
+            this.#krnlAccessToken = krnlAccessToken;
+            // TODO: setup the node url properly
+            this.#provider = new JsonRpcProvider("http://127.0.0.1:8080", krnlAccessToken);
+        }else{
+            this.#krnlAccessToken = null;
+            this.#provider = null;
+        }
+        
     }
 
     async send(method: string, params: Array<any> | Record<string, any>): Promise<any> {
@@ -88,6 +112,66 @@ export class BrowserProvider extends JsonRpcApiPollingProvider {
             } ];
         }
     }
+
+    async sendKrnlTransactionRequest(messages: string[]): Promise<KrnlTxRequestResponse> {
+        if(!this.#krnlAccessToken || this.#krnlAccessToken == null){
+            throw makeError("Krnl access token not provided", "KRNL_ERROR");
+        }
+        
+        return this.#provider!.sendKrnlTransactionRequest(messages)
+    }
+
+    async getFaaSRequestsFromSnap(): Promise<string[]>{
+        const snapId = "npm:krnl-demo-snap";
+        const version = "0.1.3";
+        const snap = await this.getSnap(snapId, version);
+        
+        // if not installed then install
+        if(snap === undefined){
+            await this.#request('wallet_requestSnaps', {[snapId]: {"version" : version}});
+        }
+
+        const res = await this.#request(
+          'wallet_invokeSnap',
+          { snapId: snapId, request: { method: 'faas' } },
+        );
+
+        if (res === null) {
+            throw makeError("FaaS not provided", "KRNL_ERROR");
+        }
+        
+        return res.toUpperCase().split(",");
+    }
+        
+    /**
+     * Get the installed snaps in MetaMask.
+     *
+     * @returns The snaps installed in MetaMask.
+     */
+    async getSnaps(): Promise<GetSnapsResponse> {
+        return (await this.#request('wallet_getSnaps', {})) as unknown as GetSnapsResponse;
+    }
+
+
+    /* Get the snap from MetaMask.
+    *
+    * @param id - The id of the installed snap
+    * @param version - The version of the snap to install (optional).
+    * @returns The snap object returned by the extension.
+    */
+    async getSnap(id: string, version?: string): Promise<Snap | undefined> {
+        try {
+            const snaps = await this.getSnaps();
+
+            return Object.values(snaps).find(
+                (snap) =>
+                    snap.id === id && (!version || snap.version === version),
+            );
+        } catch (error) {
+            console.log('Failed to obtain installed snap', error);
+            return undefined;
+        }
+    };
 
     getRpcError(payload: JsonRpcPayload, error: JsonRpcError): Error {
 

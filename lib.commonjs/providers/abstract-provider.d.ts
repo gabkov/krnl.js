@@ -177,9 +177,6 @@ export type PerformActionRequest = {
     method: "broadcastTransaction";
     signedTransaction: string;
 } | {
-    method: "broadcastKrnlTransaction";
-    signedTransaction: string;
-} | {
     method: "call";
     transaction: PerformActionTransaction;
     blockTag: BlockTag;
@@ -360,7 +357,6 @@ export declare abstract class AbstractProvider implements Provider {
     getCode(address: AddressLike, blockTag?: BlockTag): Promise<string>;
     getStorage(address: AddressLike, _position: BigNumberish, blockTag?: BlockTag): Promise<string>;
     broadcastTransaction(signedTx: string): Promise<TransactionResponse>;
-    broadcastKrnlTransaction(signedTx: string): Promise<TransactionResponse>;
     getBlock(block: BlockTag | string, prefetchTxs?: boolean): Promise<null | Block>;
     getTransaction(hash: string): Promise<null | TransactionResponse>;
     getTransactionReceipt(hash: string): Promise<null | TransactionReceipt>;
